@@ -1,12 +1,14 @@
 /**
  * Servidor Node.js (Express) para o ERP Fuzzue.
- * Deve ser rodado no Coolify e conectar-se ao banco de dados PostgreSQL.
+ * AGORA SERVE O FRONTEND (index.html) E O BACKEND (/api/...)
+ * * Rode este único serviço no Coolify.
  */
 
 // Importa módulos essenciais
 const express = require('express');
 const { Pool } = require('pg'); // Módulo oficial para PostgreSQL em Node.js
 const cors = require('cors');
+const path = require('path'); // <-- 1. ADICIONADO para lidar com caminhos de arquivos
 
 const app = express();
 const PORT = process.env.PORT || 40011;
@@ -20,8 +22,15 @@ const pool = new Pool({
 });
 
 // Middleware
-app.use(cors({ origin: '*' })); // Permite acesso de qualquer origem para testes. MUDAR PARA SEU DOMÍNIO!
+app.use(cors({ origin: '*' })); // Permite acesso de qualquer origem para testes.
 app.use(express.json());
+
+// --- 2. ADICIONADO ---
+// Isso diz ao Express para servir arquivos estáticos (como seu index.html, CSS, JS)
+// da pasta raiz do projeto.
+app.use(express.static(__dirname));
+// ----------------------
+
 
 // Função utilitária para tratamento de erros
 function handleError(res, error, message) {
@@ -30,7 +39,12 @@ function handleError(res, error, message) {
 }
 
 // -----------------------------------------------------------------------------
-// ROTA 0: Status e Conexão com DB (Novo - ESSENCIAL PARA TESTE NO COOLIFY)
+// INÍCIO: ROTAS DA API (BACKEND)
+// (Qualquer rota que começar com /api/...)
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+// ROTA 0: Status e Conexão com DB (ESSENCIAL PARA TESTE NO COOLIFY)
 // -----------------------------------------------------------------------------
 app.get('/api/status', async (req, res) => {
     try {
@@ -168,6 +182,23 @@ app.post('/api/suppliers', async (req, res) => {
     }
 });
 
+// -----------------------------------------------------------------------------
+// FIM: ROTAS DA API (BACKEND)
+// -----------------------------------------------------------------------------
+
+
+// -----------------------------------------------------------------------------
+// ROTA "CATCH-ALL" (FRONTEND)
+// -----------------------------------------------------------------------------
+// --- 3. ADICIONADO (ANTES do app.listen) ---
+// Rota "catch-all". Se o navegador pedir uma rota que não seja /api/...
+// (como /dashboard ou /pedidos, ou simplesmente /), ele envia o index.html.
+// Isso é essencial para seu frontend funcionar.
+app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, 'index.html'));
+});
+// ---------------------------------------------
+
 
 // -----------------------------------------------------------------------------
 // ROTA 4: Servidor Start
@@ -175,3 +206,4 @@ app.post('/api/suppliers', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`🚀 Servidor Fuzzue rodando na porta ${PORT}`);
 });
+
