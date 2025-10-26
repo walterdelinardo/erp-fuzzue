@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuzzue - Gerenciamento Empresarial</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fontes e Ícones -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <!-- Biblioteca QR Code -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    
+    <!-- Nosso CSS Customizado (Movido do <style> original) -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Variáveis Globais (Simulação do Ambiente Canvas) -->
+    <!-- (Mantido aqui para o main.js poder acessá-las) -->
+    <script>
+        // Use a chave vazia (padrão do ambiente Canvas)
+        const apiKey = ""; 
+
+        // Simulação dos dados que seriam injetados pelo ambiente
+        const __app_id = 'fuzzue-erp-app';
+        const __firebase_config = JSON.stringify({
+            apiKey: "AIzaSy...",
+            authDomain: "projectId.firebaseapp.com",
+            projectId: "projectId",
+            storageBucket: "projectId.appspot.com",
+            messagingSenderId: "...",
+            appId: "1:..."
+        });
+        const __initial_auth_token = ''; // Token de autenticação inicial
+    </script>
+    
+    <!-- Estrutura Principal da Aplicação (HTML Puro) -->
+    <div id="app" class="flex flex-1 hidden">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="sidebar bg-gray-900 text-white w-64 flex flex-col hidden md:flex min-h-full overflow-y-auto shadow-2xl transition-all duration-300">
+            <div class="p-4 flex items-center justify-center h-20 border-b border-gray-700">
+                <!-- SVG Fuzzue Logo -->
+                <svg viewBox="0 0 100 100" class="w-12 h-12">
+                    <defs>
+                        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#f97316;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#ea580c;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <rect x="5" y="5" width="40" height="90" rx="10" fill="url(#grad1)"/>
+                    <circle cx="25" cy="15" r="5" fill="white"/>
+                    <path d="M 25 25 L 25 5 Z" stroke="white" stroke-width="2" />
+                    <text x="18" y="70" font-family="Inter" font-size="50" font-weight="900" fill="white">F</text>
+                    <text x="50" y="55" font-family="Inter" font-size="35" font-weight="900" fill="white">FUZZUÊ</text>
+                </svg>
+            </div>
+            <ul class="flex-1 space-y-2 p-4 pt-6">
+                <!-- Item de Menu Ativo (será controlado via JS) -->
+                <li data-route="dashboard">
+                    <a href="#" class="flex items-center space-x-3 p-3 rounded-xl bg-orange-600 text-white font-semibold transition-colors duration-200 shadow-lg">
+                        <i class="fas fa-home w-5"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li data-route="pedidos">
+                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                        <i class="fas fa-receipt w-5"></i>
+                        <span>Pedidos (PDV)</span>
+                    </a>
+                </li>
+                <li data-route="clientes">
+                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                        <i class="fas fa-users w-5"></i>
+                        <span>Clientes</span>
+                    </a>
+                </li>
+                <li data-route="lojas">
+                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                        <i class="fas fa-store w-5"></i>
+                        <span>Lojas/Filiais</span>
+                    </a>
+                </li>
+                <li data-route="produtos">
+                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                        <i class="fas fa-box-open w-5"></i>
+                        <span>Produtos</span>
+                    </a>
+                </li>
+                <li data-route="ncm">
+                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                        <i class="fas fa-file-invoice-dollar w-5"></i>
+                        <span>NCM Fiscal</span>
+                    </a>
+                </li>
+                <li data-route="fornecedores">
+                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                        <i class="fas fa-truck-loading w-5"></i>
+                        <span>Fornecedores</span>
+                    </a>
+                </li>
+                <li data-route="relatorios">
+                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                        <i class="fas fa-chart-line w-5"></i>
+                        <span>Relatórios</span>
+                    </a>
+                </li>
+                <li data-route="usuarios">
+                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                        <i class="fas fa-user-shield w-5"></i>
+                        <span>Usuários</span>
+                    </a>
+                </li>
+                <li data-route="ajuda">
+                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                        <i class="fas fa-question-circle w-5"></i>
+                        <span>Ajuda/IA</span>
+                    </a>
+                </li>
+                <li data-route="configuracoes">
+                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                        <i class="fas fa-cog w-5"></i>
+                        <span>Configurações</span>
+                    </a>
+                </li>
+            </ul>
+            <div class="p-4 border-t border-gray-700">
+                <button id="logout-button" class="flex items-center space-x-3 p-3 w-full rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                    <i class="fas fa-sign-out-alt w-5"></i>
+                    <span>Sair</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Conteúdo Principal -->
+        <main class="flex-1 p-4 md:p-8 overflow-y-auto main-content">
+            <!-- Top Bar -->
+            <header class="flex justify-between items-center mb-6">
+                <div class="md:hidden">
+                    <button id="menu-toggle" class="text-gray-900 p-2 rounded-lg hover:bg-gray-200">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+                <h1 class="text-3xl font-extrabold text-gray-900 hidden md:block">Bem-vindo ao Fuzzue</h1>
+                <div class="flex items-center space-x-3">
+                    <span id="welcome-message" class="text-gray-600 text-sm">Bem-vindo(a), [Usuário]</span>
+                    <i class="fas fa-user-circle text-2xl text-orange-600"></i>
+                </div>
+            </header>
+
+            <!-- Área de Conteúdo Dinâmico -->
+            <div id="content-area" class="min-h-[80vh] bg-white p-6 rounded-xl shadow-lg">
+                <!-- O conteúdo das rotas (JS) será injetado aqui -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Tela de Login -->
+    <div id="login-screen" class="fixed inset-0 flex items-center justify-center bg-gray-100 p-4 transition-opacity duration-300 z-50">
+        <div class="text-center p-8 bg-white rounded-2xl shadow-2xl w-full max-w-sm">
+            
+            <div class="mb-6 p-4 bg-gray-900 rounded-2xl inline-block shadow-xl">
+                <span class="text-4xl font-black text-orange-600">F</span>
+                <span class="text-4xl font-black text-white">Z</span>
+            </div>
+
+            <h2 class="text-3xl font-extrabold text-gray-900">SISTEMA FUZZUE</h2>
+            <p class="text-gray-600 mb-6"></p>
+
+            <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Acesso Administrativo</h3>
+                <p class="text-sm text-gray-500 mb-6">Entre com suas credenciais para acessar o painel</p>
+
+                <div class="mb-4">
+                    <label for="login-username" class="block text-sm font-medium text-gray-700 text-left mb-1">Usuário</label>
+                    <div class="relative">
+                        <input type="text" id="login-username" placeholder="Digite seu usuário" class="w-full p-3 pl-10 border border-gray-300 rounded-xl focus:ring-orange-500 focus:border-orange-500 transition duration-150">
+                        <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <label for="login-password" class="block text-sm font-medium text-gray-700 text-left mb-1">Senha</label>
+                    <div class="relative">
+                        <input type="password" id="login-password" placeholder="Digite sua senha" class="w-full p-3 pl-10 border border-gray-300 rounded-xl focus:ring-orange-500 focus:border-orange-500 transition duration-150">
+                        <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <button id="btn-login" class="main-button w-full py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl">
+                    Entrar
+                </button>
+            </div>
+            
+            <p class="text-xs text-gray-500 mt-4">Credenciais de demonstração: Usuário: **admin** | Senha: **gbl12024**</p>
+            <div id="login-message" class="mt-4 text-sm font-medium"></div>
+        </div>
+    </div>
+    
+    <!-- Modal para Alertas Customizados -->
+    <div id="custom-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-[100]">
+        <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm transform transition-all duration-300 scale-95">
+            <h3 id="modal-title" class="text-xl font-bold mb-3 text-orange-600">Alerta</h3>
+            <p id="modal-body" class="text-gray-700 mb-6">Mensagem</p>
+            <div class="flex justify-end space-x-3">
+                <button id="modal-confirm" class="main-button px-4 py-2 rounded-xl font-semibold">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Pagamento (PDV) -->
+    <div id="payment-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-[101]">
+        <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg transform transition-all duration-300 scale-95">
+            <h3 class="text-2xl font-bold mb-4 text-gray-900 border-b pb-2">Finalizar Venda</h3>
+            
+            <div class="mb-4 flex justify-between items-center bg-gray-50 p-4 rounded-lg">
+                <span class="text-lg font-medium text-gray-700">Total a Pagar:</span>
+                <span id="payment-modal-total" class="text-3xl font-extrabold text-orange-600">R$ 0,00</span>
+            </div>
+
+            <div class="h-64 overflow-y-auto space-y-3 p-2 border border-gray-300 rounded-lg bg-white">
+                <h4 class="text-sm font-semibold text-gray-700 sticky top-0 bg-white pb-1">Formas de Pagamento Adicionadas:</h4>
+                <div id="payment-methods-list" class="space-y-2">
+                    <!-- Pagamentos adicionados dinamicamente -->
+                </div>
+            </div>
+
+            <h4 class="text-md font-semibold text-gray-700 mt-4 mb-2">Adicionar Pagamento</h4>
+            <div class="grid grid-cols-3 gap-2">
+                <select id="payment-type" class="col-span-1 p-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="Dinheiro">Dinheiro</option>
+                    <option value="PIX">PIX</option>
+                    <option value="Debito">Débito</option>
+                    <option value="Credito">Crédito</option>
+                    <option value="Parcelado">Parcelado (Crédito)</option>
+                </select>
+                <input type="number" id="payment-value" placeholder="Valor (R$)" class="col-span-1 p-2 border border-gray-300 rounded-lg text-sm">
+                <select id="payment-installments" class="col-span-1 p-2 border border-gray-300 rounded-lg text-sm" disabled>
+                    <option value="1">1x</option>
+                    <option value="2">2x</option>
+                    <option value="3">3x</option>
+                    <option value="4">4x</option>
+                    <option value="5">5x</option>
+                    <option value="6">6x</option>
+                    <option value="7">7x</option>
+                    <option value="8">8x</option>
+                    <option value="9">9x</option>
+                    <option value="10">10x</option>
+                </select>
+            </div>
+            <button id="btn-add-payment" class="bg-gray-900 text-white w-full py-2 mt-3 rounded-xl font-semibold hover:bg-gray-700">Adicionar Pagamento</button>
+
+            <div class="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
+                <span id="payment-modal-change" class="text-lg font-semibold text-gray-700">Troco: R$ 0,00</span>
+                <button id="btn-finalize-sale" class="main-button px-6 py-3 rounded-xl font-semibold shadow-md">
+                    <i class="fas fa-check-circle mr-2"></i> Finalizar
+                </button>
+            </div>
+
+            <div class="mt-4 flex justify-between">
+                <button id="btn-cancel-payment" class="text-sm text-gray-500 hover:text-red-500" onclick="document.getElementById('payment-modal').classList.add('hidden')">Cancelar e Voltar</button>
+                <button id="btn-nfe-option" class="text-sm text-blue-500 hover:text-blue-700">Emitir NF-e/Cupom Fiscal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TODO: O próximo passo é quebrar este main.js gigante em módulos -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

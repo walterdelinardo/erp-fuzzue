@@ -1,0 +1,20 @@
+Dependências do Node.js
+
+node_modules/
+
+Arquivo de variáveis de ambiente
+
+Contém senhas e chaves de API, NUNCA deve ir para o Git.
+
+.env
+
+Arquivos de log
+
+logs/
+.log
+npm-debug.log
+
+Arquivos de sistema
+
+.DS_Store
+Thumbs.db

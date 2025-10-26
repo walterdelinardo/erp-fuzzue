@@ -1,0 +1,37 @@
+/* CSS movido do <style> original do index.html */
+:root {
+    --color-primary: #ea580c; /* Laranja forte */
+    --color-secondary: #1f2937; /* Preto/Cinza Escuro para contraste */
+    --color-background: #f3f4f6; /* Cinza Claro */
+}
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--color-background);
+}
+/* Estilos customizados para o scrollbar */
+.sidebar, .main-content {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-primary) #e5e7eb;
+}
+.sidebar::-webkit-scrollbar, .main-content::-webkit-scrollbar {
+    width: 8px;
+}
+.sidebar::-webkit-scrollbar-thumb, .main-content::-webkit-scrollbar-thumb {
+    background-color: var(--color-primary);
+    border-radius: 20px;
+}
+.sidebar::-webkit-scrollbar-track, .main-content::-webkit-scrollbar-track {
+    background: #e5e7eb;
+}
+.main-button {
+    background-color: var(--color-primary);
+    color: white;
+    transition: background-color 0.2s;
+}
+.main-button:hover {
+    background-color: #f97316; /* Laranja mais claro no hover */
+}
+/* Classe para Alerta Crítico */
+.alert-critical {
+    border-color: #ef4444 !important; /* Vermelho forte */
+}
