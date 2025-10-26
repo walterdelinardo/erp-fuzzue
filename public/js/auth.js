@@ -18,28 +18,24 @@ async function initializeAuth() {
     const loginButton = document.getElementById('btn-login');
     const passwordInput = document.getElementById('login-password');
 
-    // **NOVO:** Adiciona listener para o botão de LOGIN AQUI
+    // **SIMPLIFICADO:** Adiciona listener diretamente ao botão de LOGIN
     if (loginButton) {
         console.log("[Auth] Botão #btn-login encontrado."); // Log 2
-        // Remove listener antigo para garantir que não haja duplicados
-        const newLoginButton = loginButton.cloneNode(true); // Clona o botão
-        loginButton.parentNode.replaceChild(newLoginButton, loginButton); // Substitui o antigo pelo clone
-        
-        // Adiciona o listener AO CLONE
-        newLoginButton.addEventListener('click', handleLogin);
-        console.log("[Auth] Listener de clique ADICIONADO ao #btn-login."); // Log 3
+        // Remove listener antigo (caso exista de alguma forma) antes de adicionar
+        loginButton.removeEventListener('click', handleLogin); // Tenta remover
+        // Adiciona o listener diretamente
+        loginButton.addEventListener('click', handleLogin);
+        console.log("[Auth] Listener de clique ADICIONADO DIRETAMENTE ao #btn-login."); // Log 3
     } else {
         console.error("[Auth] Botão de login (#btn-login) NÃO encontrado durante inicialização!");
     }
     // Adiciona listener para Enter no campo de senha
      if(passwordInput) {
         console.log("[Auth] Input #login-password encontrado, adicionando listener keydown."); // Log 4
-        passwordInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                console.log("[Auth] Enter pressionado na senha, chamando handleLogin..."); // Log 5
-                handleLogin();
-            }
-        });
+        // Remove listener antigo (caso exista)
+        passwordInput.removeEventListener('keydown', handlePasswordEnter);
+        // Adiciona o novo listener
+        passwordInput.addEventListener('keydown', handlePasswordEnter);
     } else {
          console.error("[Auth] Input #login-password NÃO encontrado!");
     }
@@ -101,6 +97,17 @@ async function initializeAuth() {
         }
     }
     console.log("[Auth] initializeAuth concluído."); // Log 6
+}
+
+/**
+ * Função separada para lidar com o Enter na senha.
+ * @param {KeyboardEvent} e - O evento do teclado.
+ */
+function handlePasswordEnter(e) {
+    if (e.key === 'Enter') {
+        console.log("[Auth] Enter pressionado na senha, chamando handleLogin..."); // Log 5
+        handleLogin();
+    }
 }
 
 
@@ -211,6 +218,7 @@ function handleLogout() {
     state.setUserId(null); // Limpa o ID do usuário no estado
     state.setAuthReady(false); // Considera não pronto até nova autenticação
     // Limpa dados sensíveis do estado
+    // As funções setProducts/setSuppliers precisam ser importadas diretamente
     state.setProducts([]);
     state.setSuppliers([]);
     // Limpa estado da venda atual (importa a função de state.js)
