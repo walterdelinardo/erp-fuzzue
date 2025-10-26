@@ -3,7 +3,8 @@
  * * Funções para buscar dados do backend e interagir com APIs externas (Gemini).
  */
 import { apiKey } from './config.js'; // Importa a chave da API Gemini
-import { setProducts, setSuppliers } from './state.js'; // Importa setters do estado
+// CORRIGIDO: Importa setAllProducts e setAllSuppliers corretamente
+import { setAllProducts, setAllSuppliers } from './state.js';
 import { showCustomModal } from './utils.js'; // Importa utilitário de modal
 import { contentArea } from './ui.js'; // Importa referência à área de conteúdo
 
@@ -45,8 +46,9 @@ async function loadInitialData() {
         const suppliers = await suppliersResponse.json();
 
         // Atualiza o estado global
-        setProducts(products);
-        setSuppliers(suppliers);
+        // CORRIGIDO: Usa os nomes corretos das funções importadas
+        setAllProducts(products);
+        setAllSuppliers(suppliers);
 
         console.log(`Dados carregados: ${products.length} produtos, ${suppliers.length} fornecedores.`);
 
@@ -143,3 +145,4 @@ async function callGeminiApi(prompt, systemInstruction = null) {
 
 
 export { loadInitialData, callGeminiApi };
+
