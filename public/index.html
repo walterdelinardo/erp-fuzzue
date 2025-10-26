@@ -4,29 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fuzzue - Gerenciamento Empresarial</title>
-    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Fontes e Ícones -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <!-- Font Awesome (Ícones) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    
-    <!-- Biblioteca QR Code -->
+    <!-- QR Code Library -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     
-    <!-- Nosso CSS Customizado (Movido do <style> original) -->
+    <!-- Nosso CSS Customizado (agora em arquivo separado) -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <!-- Variáveis Globais (Simulação do Ambiente Canvas) -->
-    <!-- (Mantido aqui para o main.js poder acessá-las) -->
+    <!-- 
+      Simulação das Variáveis Globais (Ambiente Canvas) 
+      Estas variáveis são lidas pelo nosso config.js
+    -->
     <script>
-        // Use a chave vazia (padrão do ambiente Canvas)
-        const apiKey = ""; 
-
-        // Simulação dos dados que seriam injetados pelo ambiente
         const __app_id = 'fuzzue-erp-app';
         const __firebase_config = JSON.stringify({
             apiKey: "AIzaSy...",
@@ -39,10 +33,10 @@
         const __initial_auth_token = ''; // Token de autenticação inicial
     </script>
     
-    <!-- Estrutura Principal da Aplicação (HTML Puro) -->
+    <!-- Container Principal da Aplicação (Escondido por padrão) -->
     <div id="app" class="flex flex-1 hidden">
         <!-- Sidebar -->
-        <nav id="sidebar" class="sidebar bg-gray-900 text-white w-64 flex flex-col hidden md:flex min-h-full overflow-y-auto shadow-2xl transition-all duration-300">
+        <nav id="sidebar" class="sidebar bg-gray-900 text-white w-64 flex-col hidden md:flex min-h-full overflow-y-auto shadow-2xl transition-all duration-300">
             <div class="p-4 flex items-center justify-center h-20 border-b border-gray-700">
                 <!-- SVG Fuzzue Logo -->
                 <svg viewBox="0 0 100 100" class="w-12 h-12">
@@ -60,69 +54,69 @@
                 </svg>
             </div>
             <ul class="flex-1 space-y-2 p-4 pt-6">
-                <!-- Item de Menu Ativo (será controlado via JS) -->
+                <!-- Links de Navegação (controlados por ui.js) -->
                 <li data-route="dashboard">
-                    <a href="#" class="flex items-center space-x-3 p-3 rounded-xl bg-orange-600 text-white font-semibold transition-colors duration-200 shadow-lg">
+                    <a href="#" class="nav-link flex items-center space-x-3 p-3 rounded-xl bg-orange-600 text-white font-semibold transition-colors duration-200 shadow-lg">
                         <i class="fas fa-home w-5"></i>
                         <span>Dashboard</span>
                     </a>
                 </li>
                 <li data-route="pedidos">
-                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                    <a href="#" class="nav-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
                         <i class="fas fa-receipt w-5"></i>
                         <span>Pedidos (PDV)</span>
                     </a>
                 </li>
                 <li data-route="clientes">
-                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                    <a href="#" class="nav-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
                         <i class="fas fa-users w-5"></i>
                         <span>Clientes</span>
                     </a>
                 </li>
                 <li data-route="lojas">
-                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                    <a href="#" class="nav-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
                         <i class="fas fa-store w-5"></i>
                         <span>Lojas/Filiais</span>
                     </a>
                 </li>
                 <li data-route="produtos">
-                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                    <a href="#" class="nav-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
                         <i class="fas fa-box-open w-5"></i>
                         <span>Produtos</span>
                     </a>
                 </li>
                 <li data-route="ncm">
-                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                    <a href="#" class="nav-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
                         <i class="fas fa-file-invoice-dollar w-5"></i>
                         <span>NCM Fiscal</span>
                     </a>
                 </li>
                 <li data-route="fornecedores">
-                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                    <a href="#" class="nav-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
                         <i class="fas fa-truck-loading w-5"></i>
                         <span>Fornecedores</span>
                     </a>
                 </li>
                 <li data-route="relatorios">
-                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                    <a href="#" class="nav-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
                         <i class="fas fa-chart-line w-5"></i>
                         <span>Relatórios</span>
                     </a>
                 </li>
                 <li data-route="usuarios">
-                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                    <a href="#" class="nav-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
                         <i class="fas fa-user-shield w-5"></i>
                         <span>Usuários</span>
                     </a>
                 </li>
                 <li data-route="ajuda">
-                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                    <a href="#" class="nav-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
                         <i class="fas fa-question-circle w-5"></i>
                         <span>Ajuda/IA</span>
                     </a>
                 </li>
                 <li data-route="configuracoes">
-                    <a href="#" class="menu-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
+                    <a href="#" class="nav-link flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-700 transition-colors duration-200">
                         <i class="fas fa-cog w-5"></i>
                         <span>Configurações</span>
                     </a>
@@ -152,14 +146,14 @@
                 </div>
             </header>
 
-            <!-- Área de Conteúdo Dinâmico -->
+            <!-- Área de Conteúdo Dinâmico (onde as rotas são renderizadas) -->
             <div id="content-area" class="min-h-[80vh] bg-white p-6 rounded-xl shadow-lg">
-                <!-- O conteúdo das rotas (JS) será injetado aqui -->
+                <!-- O conteúdo das rotas será injetado aqui -->
             </div>
         </main>
     </div>
 
-    <!-- Tela de Login -->
+    <!-- Tela de Login (Visível por padrão) -->
     <div id="login-screen" class="fixed inset-0 flex items-center justify-center bg-gray-100 p-4 transition-opacity duration-300 z-50">
         <div class="text-center p-8 bg-white rounded-2xl shadow-2xl w-full max-w-sm">
             
@@ -196,12 +190,12 @@
                 </button>
             </div>
             
-            <p class="text-xs text-gray-500 mt-4">Credenciais de demonstração: Usuário: **admin** | Senha: **gbl12024**</p>
+            <p class="text-xs text-gray-500 mt-4">Credenciais de demonstração: Usuário: **admin** | Senha: **admin**</p>
             <div id="login-message" class="mt-4 text-sm font-medium"></div>
         </div>
     </div>
     
-    <!-- Modal para Alertas Customizados -->
+    <!-- Modal para Alertas Customizados (controlado por utils.js) -->
     <div id="custom-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-[100]">
         <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm transform transition-all duration-300 scale-95">
             <h3 id="modal-title" class="text-xl font-bold mb-3 text-orange-600">Alerta</h3>
@@ -212,7 +206,28 @@
         </div>
     </div>
 
-    <!-- Modal de Pagamento (PDV) -->
+    <!-- 
+      NOVO MODAL DE SENHA (controlado por utils.js) 
+      Este é o HTML que a função showPasswordPrompt() procura.
+    -->
+    <div id="password-prompt-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-[101]">
+        <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm transform transition-all duration-300 scale-95">
+            <h3 class="text-xl font-bold mb-3 text-orange-600">Autorização Necessária</h3>
+            <p id="password-prompt-body" class="text-gray-700 mb-4">Por favor, insira a senha de administrador para aplicar o desconto.</p>
+            
+            <div>
+                <label for="password-prompt-input" class="block text-sm font-medium text-gray-700">Senha Master</label>
+                <input type="password" id="password-prompt-input" class="mt-1 w-full p-3 border border-gray-300 rounded-xl focus:ring-orange-500 focus:border-orange-500 transition duration-150">
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-6">
+                <button id="password-prompt-cancel" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-semibold hover:bg-gray-300">Cancelar</button>
+                <button id="password-prompt-confirm" class="main-button px-4 py-2 rounded-xl font-semibold">Confirmar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Pagamento (PDV) (controlado por pdv.js) -->
     <div id="payment-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-[101]">
         <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg transform transition-all duration-300 scale-95">
             <h3 class="text-2xl font-bold mb-4 text-gray-900 border-b pb-2">Finalizar Venda</h3>
@@ -268,7 +283,13 @@
         </div>
     </div>
 
-    <!-- TODO: O próximo passo é quebrar este main.js gigante em módulos -->
+
+    <!-- 
+      Nosso Ponto de Entrada JavaScript 
+      (Importa todos os outros módulos)
+    -->
     <script type="module" src="js/main.js"></script>
+
 </body>
 </html>
+

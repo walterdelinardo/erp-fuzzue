@@ -1,4 +1,4 @@
-/* CSS movido do <style> original do index.html */
+/* --- Estilos Globais e Variáveis --- */
 :root {
     --color-primary: #ea580c; /* Laranja forte */
     --color-secondary: #1f2937; /* Preto/Cinza Escuro para contraste */
@@ -9,18 +9,18 @@ body {
     background-color: var(--color-background);
 }
 /* Estilos customizados para o scrollbar */
-.sidebar, .main-content {
+.sidebar, .main-content, .overflow-y-auto {
     scrollbar-width: thin;
     scrollbar-color: var(--color-primary) #e5e7eb;
 }
-.sidebar::-webkit-scrollbar, .main-content::-webkit-scrollbar {
+.sidebar::-webkit-scrollbar, .main-content::-webkit-scrollbar, .overflow-y-auto::-webkit-scrollbar {
     width: 8px;
 }
-.sidebar::-webkit-scrollbar-thumb, .main-content::-webkit-scrollbar-thumb {
+.sidebar::-webkit-scrollbar-thumb, .main-content::-webkit-scrollbar-thumb, .overflow-y-auto::-webkit-scrollbar-thumb {
     background-color: var(--color-primary);
     border-radius: 20px;
 }
-.sidebar::-webkit-scrollbar-track, .main-content::-webkit-scrollbar-track {
+.sidebar::-webkit-scrollbar-track, .main-content::-webkit-scrollbar-track, .overflow-y-auto::-webkit-scrollbar-track {
     background: #e5e7eb;
 }
 .main-button {
@@ -31,7 +31,45 @@ body {
 .main-button:hover {
     background-color: #f97316; /* Laranja mais claro no hover */
 }
+.main-button:disabled {
+    background-color: #fdba74; /* Laranja bem claro para desabilitado */
+    cursor: not-allowed;
+}
 /* Classe para Alerta Crítico */
 .alert-critical {
     border-color: #ef4444 !important; /* Vermelho forte */
 }
+
+/* --- NOVOS ESTILOS PARA O PDV (Autocomplete) --- */
+
+/* Container da lista de resultados */
+.search-results-list {
+    /* Garante que o dropdown apareça sobre os outros itens */
+    z-index: 50; 
+    /* Posicionamento flutuante logo abaixo do input */
+    position: absolute; 
+    width: 100%;
+    
+    background-color: white;
+    border: 1px solid #d1d5db; /* Borda cinza */
+    border-top: none; /* Remove a borda de cima pois já temos a do input */
+    border-radius: 0 0 0.5rem 0.5rem; /* Arredonda cantos de baixo */
+    
+    max-height: 20rem; /* Altura máxima de 320px */
+    overflow-y: auto;
+    
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Estilo de cada item no dropdown */
+.search-result-item {
+    transition: background-color 0.15s ease-in-out;
+}
+.search-result-item:hover {
+    background-color: #fff7ed; /* Fundo Laranja bem claro (Tailwind orange-50) */
+}
+/* Remove a borda do último elemento */
+.search-result-item:last-child {
+    border-bottom: none;
+}
+

@@ -1,100 +1,130 @@
-/**
- * public/js/modules/sales.js
- * * Módulo de renderização da tela de Pedidos (PDV).
- */
-import { contentArea } from '../ui.js';
-import { renderSaleItems, openPaymentModal, cancelSale, searchAndAddProduct } from './pdv.js'; // Importa a lógica do PDV
+import { getStoreName } from '../utils.js';
+import { allProducts } from '../state.js';
+import { 
+    handleSearchInput, 
+    handleSearchFocus, 
+    handleSearchBlur, 
+    searchAndAddProduct, 
+    renderSaleItems,
+    promptClearSale 
+} from './pdv.js';
 
-/**
- * Renderiza o conteúdo da tela de Pedidos (PDV).
- */
-async function renderPedidos() {
+// Função para renderizar a interface principal do PDV (sales.js)
+export function renderPedidos() {
+    const contentArea = document.getElementById('content-area');
+    
+    // HTML atualizado com o dropdown de busca e novos campos de desconto
     contentArea.innerHTML = `
-        <!-- Layout Flexível para PDV -->
-        <div class="flex flex-col lg:flex-row h-[78vh] w-full gap-4">
+        <div class="flex flex-col lg:flex-row h-[80vh] w-full gap-4">
             
-            <!-- Coluna 1: Itens da Venda e Busca (Ocupa 2/3) -->
-            <div class="flex flex-col lg:w-2/3 bg-gray-50 p-4 rounded-xl shadow-inner overflow-hidden">
-                <!-- Input de Busca -->
-                <div class="mb-4">
-                    <label for="barcode-input" class="block text-sm font-medium text-gray-700">Buscar Produto (SKU, Código de Barras ou Nome)</label>
-                    <div class="relative mt-1">
-                        <input type="text" id="barcode-input" placeholder="Leia o código ou digite o nome..." 
-                               class="w-full p-4 pl-12 border border-gray-300 rounded-xl focus:ring-orange-500 focus:border-orange-500 text-lg">
-                        <i class="fas fa-barcode absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-2xl"></i>
+            <!-- Coluna 1: Itens da Venda e Busca -->
+            <div class="flex flex-col lg:w-3/4 bg-gray-50 p-4 rounded-xl shadow-inner overflow-hidden">
+                
+                <!-- Campo de Busca com Autocomplete -->
+                <div class="relative mb-3">
+                    <label for="barcode-input" class="block text-sm font-medium text-gray-700 mb-1">Buscar Produto (SKU, Código de Barras ou Nome)</label>
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="barcode-input" placeholder="Digite o nome, SKU ou código..." 
+                               class="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500">
+                    </div>
+                    <!-- Dropdown de Resultados da Busca (flutuante) -->
+                    <div id="search-results" class="search-results-list hidden absolute z-50 w-full bg-white border border-gray-300 rounded-b-lg shadow-lg max-h-60 overflow-y-auto">
+                        <!-- Os resultados da busca serão injetados aqui pelo pdv.js -->
                     </div>
                 </div>
                 
-                <!-- Lista de Itens (Scrollável) -->
-                <div id="sale-items-list" class="flex-1 space-y-3 overflow-y-auto p-2 bg-white border border-gray-200 rounded-lg">
-                    <!-- Itens da venda serão injetados aqui por renderSaleItems() -->
+                <!-- Lista de Itens da Venda -->
+                <div id="sale-items-list" class="flex-1 overflow-y-auto space-y-2 pr-2">
+                    <!-- Itens da venda serão renderizados aqui pelo pdv.js -->
+                    <p class="text-gray-500 text-center mt-4">Nenhum item na venda.</p>
                 </div>
             </div>
-            
-            <!-- Coluna 2: Totais e Ações (Ocupa 1/3) -->
-            <div class="flex flex-col lg:w-1/3 bg-gray-900 p-6 rounded-xl shadow-2xl text-white">
-                <h3 class="text-2xl font-bold border-b border-gray-700 pb-3 mb-4">Total da Venda</h3>
+
+            <!-- Coluna 2: Totais e Ações -->
+            <div class="flex flex-col lg:w-1/4 bg-gray-900 p-6 rounded-xl shadow-2xl text-white">
+                <h3 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2">Total da Venda</h3>
                 
-                <div class="mb-6">
-                    <span class="text-lg text-gray-400">Valor Total</span>
-                    <p id="sale-total-display" class="text-6xl font-extrabold text-orange-500">R$ 0,00</p>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-lg text-gray-400">Subtotal:</span>
+                    <span id="sale-subtotal" class="text-lg font-medium text-gray-300">R$ 0,00</span>
+                </div>
+
+                <!-- Campo de Desconto Geral -->
+                <div class="flex justify-between items-center mb-4">
+                    <label for="general-discount" class="text-lg text-gray-400">Desconto (R$):</label>
+                    <input type="number" id="general-discount" 
+                           class="w-24 p-1 rounded bg-gray-700 text-white text-right font-semibold focus:outline-none focus:ring-2 focus:ring-orange-500" 
+                           value="0.00" 
+                           placeholder="0,00">
+                </div>
+
+                <div class="border-t border-gray-700 pt-4">
+                    <span class="text-sm text-gray-400 block text-right">Valor Total</span>
+                    <p id="sale-total" class="text-4xl font-extrabold text-right text-orange-500 mb-6">R$ 0,00</p>
                 </div>
                 
-                <!-- Botão Principal de Pagamento -->
-                <button id="btn-open-payment" class="main-button w-full py-5 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl mb-4">
-                    <i class="fas fa-dollar-sign mr-2"></i> FINALIZAR (F1)
+                <button id="btn-open-payment" class="w-full main-button py-4 rounded-xl font-semibold shadow-lg text-lg flex items-center justify-center space-x-2">
+                    <i class="fas fa-dollar-sign"></i>
+                    <span>FINALIZAR (F1)</span>
+                </button>
+                <button id="btn-cancel-sale" class="w-full bg-red-600 hover:bg-red-700 text-white py-3 mt-3 rounded-xl font-semibold shadow-lg">
+                    Cancelar Venda (F4)
                 </button>
                 
-                <button id="btn-cancel-sale" class="bg-red-600 text-white w-full py-3 rounded-xl font-semibold hover:bg-red-700 mb-6">
-                    <i class="fas fa-times mr-2"></i> Cancelar Venda (F4)
-                </button>
-                
-                <div class="mt-auto text-sm text-gray-500">
-                    <p>Atalhos:</p>
+                <div class="mt-auto text-xs text-gray-500">
+                    <p class="font-semibold">Atalhos:</p>
                     <p>F1: Finalizar Venda</p>
                     <p>F4: Cancelar Venda</p>
+                    <p>ESC: Limpar Busca</p>
                 </div>
             </div>
         </div>
     `;
-    
-    // --- Adiciona Listeners Específicos da Rota ---
-    
-    const barcodeInput = document.getElementById('barcode-input');
-    if (barcodeInput) {
-        barcodeInput.focus(); // Foco automático no input de busca
-        // Listener para "Enter" no input
-        barcodeInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault(); // Evita submit de formulário (se houver)
-                searchAndAddProduct(); // Chama a lógica do PDV
-            }
-        });
-    }
 
-    // Botões
-    document.getElementById('btn-open-payment').onclick = openPaymentModal;
-    document.getElementById('btn-cancel-sale').onclick = cancelSale;
-    
-    // Atalhos de Teclado (específicos desta rota)
-    document.onkeydown = function(e) {
-        // Foco automático no input de busca se o usuário começar a digitar
-        if (e.key.length === 1 && e.key.match(/[a-z0-9]/i) && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-             if(barcodeInput) barcodeInput.focus();
-        }
-        
-        if (e.key === 'F1') {
-            e.preventDefault();
-            openPaymentModal();
-        }
-        if (e.key === 'F4') {
-            e.preventDefault();
-            cancelSale();
-        }
-    };
-
-    // Renderiza os itens da venda atual (pode estar vazia ou não)
+    // Renderiza os itens iniciais (vazio)
     renderSaleItems();
+
+    // Adiciona os listeners de eventos (agora gerenciados pelo pdv.js)
+    const searchInput = document.getElementById('barcode-input');
+    searchInput.addEventListener('input', handleSearchInput);
+    searchInput.addEventListener('focus', handleSearchFocus);
+    // Adicionamos um listener global para fechar o dropdown se clicar fora
+    document.addEventListener('click', handleSearchBlur);
+    
+    // Listener para o campo de desconto geral
+    document.getElementById('general-discount').addEventListener('change', (e) => {
+        // Importa a função de desconto geral do pdv.js
+        import('./pdv.js').then(pdv => pdv.updateGeneralDiscount(e.target.value));
+    });
+
+    // Listeners dos botões
+    document.getElementById('btn-open-payment').onclick = () => {
+        import('./pdv.js').then(pdv => pdv.openPaymentModal());
+    };
+    document.getElementById('btn-cancel-sale').onclick = promptClearSale;
+
+    // Atalhos de teclado
+    document.addEventListener('keydown', handlePDVShortcuts);
 }
 
-export { renderPedidos };
+// Handler de Atalhos do Teclado
+function handlePDVShortcuts(e) {
+    if (e.key === 'F1') {
+        e.preventDefault();
+        import('./pdv.js').then(pdv => pdv.openPaymentModal());
+    }
+    if (e.key === 'F4') {
+        e.preventDefault();
+        promptClearSale();
+    }
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        const searchInput = document.getElementById('barcode-input');
+        if (searchInput) {
+            searchInput.value = '';
+            handleSearchInput({ target: searchInput }); // Simula um evento de input para limpar
+        }
+    }
+}
+

@@ -1,84 +1,99 @@
-/**
- * public/js/utils.js
- * * Funções utilitárias usadas em várias partes do frontend.
- */
+// --- Utilitários Globais ---
 
 /**
- * Mostra um modal de alerta customizado.
+ * Exibe um modal de alerta customizado (substitui alert()).
  * @param {string} title - O título do modal.
- * @param {string} body - A mensagem do modal.
- * @param {function} [onConfirm] - Função a ser executada ao clicar em OK.
+ * @param {string} body - A mensagem de corpo do modal.
+ * @param {function} [onConfirm] - (Opcional) Função a ser chamada ao clicar em OK.
  */
-function showCustomModal(title, body, onConfirm) {
-    const modalTitleEl = document.getElementById('modal-title');
-    const modalBodyEl = document.getElementById('modal-body');
+export function showCustomModal(title, body, onConfirm) {
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').textContent = body;
     const modal = document.getElementById('custom-modal');
-    const confirmBtn = document.getElementById('modal-confirm');
-
-    if (!modal || !modalTitleEl || !modalBodyEl || !confirmBtn) {
-        console.error("Elementos do modal não encontrados no DOM.");
-        // Fallback para alert se o modal falhar
-        alert(`${title}\n\n${body}`);
-        if (onConfirm) onConfirm();
-        return;
-    }
-
-    modalTitleEl.textContent = title;
-    modalBodyEl.textContent = body;
-
     modal.classList.remove('hidden');
-    modal.classList.add('flex'); // Usa flex para centralizar
-
-    // Clona o botão para remover listeners antigos e evitar acúmulo
-    const newConfirmBtn = confirmBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-
-    // Adiciona o novo listener
-    newConfirmBtn.onclick = () => {
-        modal.classList.add('hidden');
+    modal.classList.add('flex');
+    
+    const confirmBtn = document.getElementById('modal-confirm');
+    
+    // Remove o listener antigo antes de adicionar um novo para evitar chamadas múltiplas
+    confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+    document.getElementById('modal-confirm').onclick = () => {
         modal.classList.remove('flex');
+        modal.classList.add('hidden');
         if (onConfirm) {
-            try {
-                onConfirm();
-            } catch (error) {
-                console.error("Erro ao executar callback onConfirm do modal:", error);
-            }
+            onConfirm();
         }
     };
 }
 
 /**
- * Remove caracteres não numéricos de uma string (útil para CNPJ, CPF, CEP).
- * @param {string} doc_number - A string a ser limpa.
- * @returns {string} A string contendo apenas números.
+ * Exibe um modal de prompt de senha. (NOVA FUNÇÃO)
+ * @param {string} body - A mensagem de corpo do modal.
+ * @param {function} onConfirm - Função a ser chamada com a senha digitada (string).
  */
-function cleanDocumentNumber(doc_number) {
-    if (typeof doc_number === 'string') {
+export function showPasswordPrompt(body, onConfirm) {
+    const modal = document.getElementById('password-prompt-modal');
+    document.getElementById('password-prompt-body').textContent = body;
+    const passwordInput = document.getElementById('password-prompt-input');
+    passwordInput.value = ''; // Limpa o campo
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    passwordInput.focus(); // Foca no campo de senha
+
+    const confirmBtn = document.getElementById('password-prompt-confirm');
+    const cancelBtn = document.getElementById('password-prompt-cancel');
+    
+    // Usamos replaceWith para garantir que os listeners são únicos
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    
+    newConfirmBtn.onclick = () => {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+        if (onConfirm) {
+            onConfirm(passwordInput.value);
+        }
+    };
+    
+    // Listener para o botão Cancelar
+    cancelBtn.onclick = () => {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    };
+
+    // Listener para a tecla Enter no input
+    passwordInput.onkeydown = (e) => {
+        if (e.key === 'Enter') {
+            newConfirmBtn.click();
+        }
+        if (e.key === 'Escape') {
+            cancelBtn.click();
+        }
+    };
+}
+
+
+/**
+ * Limpa caracteres não numéricos (CNPJ/CPF).
+ * @param {string} doc_number - O número do documento (ex: "123.456.789-00").
+ * @returns {string} - O número limpo (ex: "12345678900").
+ */
+export function cleanDocumentNumber(doc_number) {
+    if (doc_number) {
         return doc_number.replace(/[^0-9]/g, '');
     }
     return '';
 }
 
 /**
- * Formata um ID de usuário para exibição (mostra apenas o início).
- * @param {string} userId - O ID completo do usuário.
- * @returns {string} O ID formatado ou 'Anônimo'.
+ * Obtém o nome da loja com base no ID.
+ * (Usa o mockStores importado do estado)
+ * @param {number} id - O ID da loja.
+ * @returns {string} - O nome da loja ou 'Consolidado'.
  */
-function formatUserId(userId) {
-    return userId ? `${userId.substring(0, 8)}...` : 'Anônimo';
+import { mockStores } from './state.js';
+export function getStoreName(id) {
+    return mockStores.find(s => s.id === id)?.name || 'Consolidado';
 }
 
-/**
- * Formata um valor numérico como moeda brasileira (R$).
- * @param {number} value - O valor numérico.
- * @returns {string} O valor formatado como R$ 0,00.
- */
-function formatCurrency(value) {
-    if (typeof value !== 'number' || isNaN(value)) {
-        return "R$ 0,00";
-    }
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
-
-export { showCustomModal, cleanDocumentNumber, formatUserId, formatCurrency };
