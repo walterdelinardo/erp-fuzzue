@@ -44,10 +44,11 @@ export function handleSearchInput(event) {
         return;
     }
 
+    // CORREÇÃO: Trocado 'class_name' por 'class'
     resultsList.innerHTML = filteredProducts.map(p => `
         <li class="search-result-item" data-id="${p.id}">
-            <span class_name="font-semibold">${p.name}</span>
-            <span class_name="text-sm text-gray-600"> (SKU: ${p.sku} | Estoque: ${p.stock})</span>
+            <span class="font-semibold">${p.name}</span>
+            <span class="text-sm text-gray-600"> (SKU: ${p.sku} | Estoque: ${p.stock})</span>
         </li>
     `).join('');
     
@@ -55,7 +56,8 @@ export function handleSearchInput(event) {
 
     // Adiciona listeners de clique aos novos itens
     document.querySelectorAll('.search-result-item').forEach(item => {
-        // CORREÇÃO: A sintaxe da arrow function estava errada (era "a_>")
+        // Esta é a linha que estava com o erro 'a_>' na sua imagem. 
+        // A versão que você colou estava correta, e esta também está.
         item.onclick = () => {
             addItemFromSearch(item.dataset.id);
         };
@@ -234,6 +236,7 @@ export function renderSaleItems() {
             subTotal += itemTotal;
             totalItemDiscounts += item.discount;
 
+            // CORREÇÃO: Trocado 'class_name' por 'class'
             return `
                 <div class="grid grid-cols-6 gap-2 items-center py-2 border-b border-gray-200">
                     <!-- Col 1: Nome e Estoque -->
@@ -247,7 +250,7 @@ export function renderSaleItems() {
                     </div>
                     
                     <!-- Col 2: Preço Unitário -->
-                    <div class_name="text-sm text-gray-700">R$ ${item.price.toFixed(2)}</div>
+                    <div class="text-sm text-gray-700">R$ ${item.price.toFixed(2)}</div>
                     
                     <!-- Col 3: Quantidade -->
                     <input 
