@@ -3,8 +3,9 @@
  * * Gerencia a lógica de login e logout manual da aplicação.
  */
 // CORREÇÃO: Importa 'loginMessageEl' em vez de 'loginMessage'
+// CORREÇÃO 2: Importa 'showAppScreen' em vez de 'showAppContainer'
 import { startApp } from './main.js'; // Importa a função para iniciar o app DEPOIS do login
-import { showLoginScreen, showAppContainer, loginMessageEl } from './ui.js'; 
+import { showLoginScreen, showAppScreen, loginMessageEl } from './ui.js'; 
 
 // --- Estado de Autenticação (Simples) ---
 let currentUserId = null; // Armazena o UID do Firebase (se houver)
@@ -31,13 +32,11 @@ export async function handleLogin() {
     const password = passwordInput.value;
     
     // Limpa mensagens de erro anteriores
-    // CORREÇÃO: Usa 'loginMessageEl'
     loginMessageEl.textContent = '';
     loginMessageEl.className = 'mt-4 text-sm font-medium';
 
     if (username === demoUser && password === demoPass) {
         // Sucesso
-        // CORREÇÃO: Usa 'loginMessageEl'
         loginMessageEl.textContent = 'Autenticado com sucesso. Carregando dados...';
         loginMessageEl.className = 'mt-4 text-sm font-medium text-green-600';
         
@@ -45,12 +44,22 @@ export async function handleLogin() {
         usernameInput.value = '';
         passwordInput.value = '';
 
-        // Chama a função startApp (exportada do main.js) para carregar dados e iniciar a UI
-        await startApp('Administrador'); 
+        // Desabilita botão para evitar cliques múltiplos (opcional, mas bom)
+        const loginButton = document.getElementById('btn-login');
+        if (loginButton) loginButton.disabled = true;
+
+        try {
+            // Chama a função startApp (exportada do main.js) para carregar dados e iniciar a UI
+            await startApp('Administrador'); 
+        } catch(error) {
+             // Se startApp falhar (ex: erro ao carregar dados da API)
+            loginMessageEl.textContent = `Erro ao iniciar: ${error.message}`;
+            loginMessageEl.className = 'mt-4 text-sm font-medium text-red-600';
+            if (loginButton) loginButton.disabled = false; // Reabilita o botão
+        }
         
     } else {
         // Falha
-        // CORREÇÃO: Usa 'loginMessageEl'
         loginMessageEl.textContent = `Credenciais inválidas. Tente ${demoUser} / ${demoPass}`;
         loginMessageEl.className = 'mt-4 text-sm font-medium text-red-600';
         // Não limpa os campos para o usuário corrigir
@@ -66,5 +75,9 @@ export function handleLogout() {
     
     // TODO: Adicionar lógica para limpar estado global (state.js) se necessário
     console.log("Usuário deslogado da aplicação.");
+    
+    // Reabilita o botão de login se ele existir
+    const loginButton = document.getElementById('btn-login');
+    if (loginButton) loginButton.disabled = false;
 }
 
