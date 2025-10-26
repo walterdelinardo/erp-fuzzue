@@ -2,8 +2,9 @@
  * public/js/auth.js
  * * Gerencia a lógica de login e logout manual da aplicação.
  */
+// CORREÇÃO: Importa 'loginMessageEl' em vez de 'loginMessage'
 import { startApp } from './main.js'; // Importa a função para iniciar o app DEPOIS do login
-import { showLoginScreen, showAppContainer, loginMessage } from './ui.js';
+import { showLoginScreen, showAppContainer, loginMessageEl } from './ui.js'; 
 
 // --- Estado de Autenticação (Simples) ---
 let currentUserId = null; // Armazena o UID do Firebase (se houver)
@@ -30,13 +31,15 @@ export async function handleLogin() {
     const password = passwordInput.value;
     
     // Limpa mensagens de erro anteriores
-    loginMessage.textContent = '';
-    loginMessage.className = 'mt-4 text-sm font-medium';
+    // CORREÇÃO: Usa 'loginMessageEl'
+    loginMessageEl.textContent = '';
+    loginMessageEl.className = 'mt-4 text-sm font-medium';
 
     if (username === demoUser && password === demoPass) {
         // Sucesso
-        loginMessage.textContent = 'Autenticado com sucesso. Carregando dados...';
-        loginMessage.className = 'mt-4 text-sm font-medium text-green-600';
+        // CORREÇÃO: Usa 'loginMessageEl'
+        loginMessageEl.textContent = 'Autenticado com sucesso. Carregando dados...';
+        loginMessageEl.className = 'mt-4 text-sm font-medium text-green-600';
         
         // Limpa os campos após sucesso
         usernameInput.value = '';
@@ -47,8 +50,9 @@ export async function handleLogin() {
         
     } else {
         // Falha
-        loginMessage.textContent = `Credenciais inválidas. Tente ${demoUser} / ${demoPass}`;
-        loginMessage.className = 'mt-4 text-sm font-medium text-red-600';
+        // CORREÇÃO: Usa 'loginMessageEl'
+        loginMessageEl.textContent = `Credenciais inválidas. Tente ${demoUser} / ${demoPass}`;
+        loginMessageEl.className = 'mt-4 text-sm font-medium text-red-600';
         // Não limpa os campos para o usuário corrigir
     }
 }
