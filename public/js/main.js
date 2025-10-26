@@ -1,83 +1,66 @@
-    /**
-     * public/js/main.js
-     * * Ponto de entrada principal da aplicação frontend.
-     * Responsável pela inicialização, autenticação e configuração dos listeners globais.
-     */
-    
-    // Importações Essenciais
-    import { db, auth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from './config.js'; // Configurações e Firebase
-    import { loadInitialData } from './api.js'; // Carregamento de dados
-    import { handleLogin, handleLogout, setCurrentUserId, getCurrentUserId } from './auth.js'; // Lógica de Autenticação
-    import { setupUIListeners, showLoginScreen, showAppContainer, updateWelcomeMessage, showLoadingMessage, showErrorMessage } from './ui.js'; // Lógica da UI
-    import { navigate } from './router.js'; // Navegação
-    import { currentRoute } from './state.js'; // Estado global (para saber a rota inicial)
-    
-    // --- Inicialização da Aplicação ---
-    
-    window.onload = () => {
-        console.log("App Fuzzue: Iniciando...");
-        
-        // Configura os listeners da UI (botões de login/logout, menu, etc.)
-        setupUIListeners(handleLogin, handleLogout, navigate);
-    
-        // Tenta autenticar no Firebase (Anônimo ou com Token)
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-            signInWithCustomToken(auth, __initial_auth_token)
-                .catch(error => {
-                    console.error("Firebase: Erro no token customizado. Entrando como anônimo.", error);
-                    signInAnonymously(auth);
-                });
-        } else {
-            signInAnonymously(auth).catch(error => {
-                console.error("Firebase: Erro ao autenticar anonimamente.", error);
-                // Mesmo com erro, tentamos continuar, a tela de login será exibida.
-            });
-        }
-        
-        // Listener PRINCIPAL do estado de autenticação Firebase
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                setCurrentUserId(user.uid);
-                console.log(`Firebase: Sessão pronta. UID: ${getCurrentUserId()}`);
-                
-                // --- Lógica de Login da Aplicação ---
-                // Neste ponto, temos uma sessão Firebase, mas precisamos do login manual
-                // A função startApp() é chamada pelo handleLogin() APÓS a senha correta.
-                // Aqui, apenas garantimos que a tela correta (login ou app) seja mostrada
-                // Se o usuário já fez login antes (simulado), poderíamos tentar iniciar direto,
-                // mas mantemos o login manual por enquanto.
-                // showLoginScreen(); // Mostra a tela de login por padrão
-    
-            } else {
-                setCurrentUserId(null);
-                console.log("Firebase: Usuário deslogado.");
-                showLoginScreen(); // Mostra a tela de login
+/**
+ * public/js/main.js
+ * * Ponto de entrada principal da aplicação frontend.
+ * Responsável por inicializar módulos, configurar listeners globais
+ * e iniciar o fluxo de autenticação/aplicação.
+ */
+
+// Importa funções essenciais de outros módulos
+import { initializeAuth, handleLogin, handleLogout } from './auth.js'; // Funções de autenticação
+import { setupUIEventListeners } from './ui.js'; // Configura listeners da UI (menu, sidebar, etc.)
+import { navigate } from './router.js'; // Função de navegação inicial
+import { currentRoute } from './state.js'; // Para obter a rota inicial (se houver)
+
+/**
+ * Função principal que inicia a aplicação.
+ * É chamada após o login bem-sucedido.
+ * AGORA É EXPORTADA para que auth.js possa chamá-la.
+ */
+export async function startApp(role) {
+    // A lógica de startApp foi movida para auth.js
+    // Esta função agora está em auth.js e é importada por ele mesmo
+    // para evitar dependência circular. Deixaremos esta exportação
+    // caso outro módulo precise dela, mas a implementação está em auth.js
+    // que por sua vez chama loadInitialData e navigate.
+    console.log("Chamando startApp de auth.js...");
+    // Importa dinamicamente para evitar dependência circular na carga inicial
+    const authModule = await import('./auth.js');
+    await authModule.startApp(role);
+}
+
+
+// --- Ponto de Entrada da Aplicação ---
+window.onload = async () => {
+    console.log("DOM carregado. Iniciando aplicação...");
+
+    // 1. Configura listeners básicos da UI (menu, sidebar, logout)
+    setupUIEventListeners();
+
+    // 2. Tenta inicializar a autenticação (Firebase ou Mock)
+    //    Isso vai definir se mostra a tela de login ou tenta iniciar o app
+    await initializeAuth();
+
+    // 3. **CORREÇÃO:** Adiciona o listener para o botão de LOGIN
+    const loginButton = document.getElementById('btn-login');
+    if (loginButton) {
+        loginButton.addEventListener('click', handleLogin);
+        console.log("Listener do botão de login adicionado.");
+    } else {
+        console.error("Botão de login (#btn-login) não encontrado!");
+    }
+
+    // Adiciona listener para Enter no campo de senha (opcional, mas útil)
+    const passwordInput = document.getElementById('login-password');
+    if(passwordInput) {
+        passwordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                handleLogin();
             }
         });
-    };
-    
-    /**
-     * Inicia a aplicação DEPOIS que o login manual foi bem-sucedido.
-     * Esta função é chamada DENTRO do handleLogin() em auth.js.
-     * @param {string} role - O "cargo" do usuário (ex: 'Administrador')
-     */
-    export async function startApp(role) {
-        console.log(`App Fuzzue: Iniciando aplicação para ${role}...`);
-        showLoadingMessage("Carregando dados iniciais..."); // Mostra loader na área de conteúdo
-        showAppContainer(); // Mostra o container principal do app (sidebar + main)
-        updateWelcomeMessage(role); // Atualiza a mensagem de boas-vindas
-    
-        try {
-            await loadInitialData(); // Carrega produtos e fornecedores da API
-            console.log("App Fuzzue: Dados iniciais carregados.");
-            
-            // Navega para a rota inicial (geralmente 'dashboard')
-            navigate(currentRoute); 
-    
-        } catch (error) {
-            console.error("App Fuzzue: Erro crítico ao iniciar aplicação.", error);
-            showErrorMessage("Erro Crítico ao Carregar Dados", error.message);
-        }
     }
-    
+
+    // Nota: A navegação inicial (navigate) agora é chamada DENTRO do startApp em auth.js,
+    // APÓS o login bem-sucedido e o carregamento dos dados.
+    console.log("Inicialização do main.js concluída.");
+};
 
