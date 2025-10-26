@@ -2,8 +2,11 @@
  * public/js/router.js
  * * Gerencia a navegação entre os módulos (rotas) da aplicação.
  */
-import { setCurrentRoute } from './state.js';
+// REMOVIDO: import { setCurrentRoute } from './state.js';
 import { contentArea, updateSidebarActiveLink } from './ui.js';
+
+// **NOVO:** A rota atual agora é mantida aqui neste módulo
+let currentRoute = 'dashboard';
 
 // Importa dinamicamente TODAS as funções de renderização dos módulos
 // Isso permite que o Webpack/Vite (futuramente) faça "code splitting"
@@ -52,8 +55,9 @@ async function navigate(routeName) {
         routeName = 'dashboard';
     }
 
-    // Atualiza o estado global
-    setCurrentRoute(routeName);
+    // **NOVO:** Atualiza a variável local deste módulo
+    currentRoute = routeName;
+    console.log(`[Router] Navegando para: ${currentRoute}`); // Log de navegação
 
     // Encontra a rota no mapeamento
     const route = routes[routeName];
@@ -61,23 +65,27 @@ async function navigate(routeName) {
     try {
         // Mostra um loader enquanto o módulo carrega (especialmente na primeira vez)
         if (!route.handler) {
+            console.log(`[Router] Carregando módulo para a rota: ${routeName}`);
             contentArea.innerHTML = `<div class="flex justify-center items-center h-full min-h-[50vh]">
                 <i class="fas fa-spinner fa-spin text-2xl text-orange-600"></i>
                 <span class="ml-3 text-gray-600">Carregando módulo...</span>
             </div>`;
-            
+
             // Carrega o módulo (import dinâmico) e armazena o handler
             const renderFunction = await route.load();
             route.handler = renderFunction;
+            console.log(`[Router] Módulo ${routeName} carregado.`);
         }
-        
+
         // Adiciona classe de transição (fade-in)
         contentArea.classList.remove('content-fade-in');
         void contentArea.offsetWidth; // Força o "reflow" do navegador
 
         // Chama a função de renderização do módulo, que preencherá o contentArea
+        console.log(`[Router] Renderizando rota: ${routeName}`);
         await route.handler();
-        
+        console.log(`[Router] Rota ${routeName} renderizada.`);
+
         contentArea.classList.add('content-fade-in');
 
         // Atualiza o link ativo na sidebar
@@ -92,5 +100,6 @@ async function navigate(routeName) {
     }
 }
 
-// Exporta a função de navegação para ser usada pela UI (links da sidebar)
-export { navigate };
+// Exporta a função de navegação e a rota atual
+export { navigate, currentRoute };
+
