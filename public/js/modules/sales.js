@@ -1,6 +1,11 @@
 // --- Módulo: Pedidos (PDV) - Interface ---
 
-import { renderSaleItems, openPaymentModal, cancelSale, handleSearchInput, hideSearchDropdown } from './pdv.js';
+// Importa APENAS as funções que serão chamadas PELO HTML (via onchange, onclick, etc.)
+// As funções importadas aqui precisam estar disponíveis no escopo global ou anexadas a um objeto global (como 'pdv')
+// Alternativamente, poderíamos usar event delegation no main.js/ui.js, mas para simplificar, vamos expor via 'pdv'.
+import * as pdv from './pdv.js'; 
+// Anexa as funções exportadas de pdv.js ao objeto window.pdv para que o HTML possa chamá-las
+window.pdv = pdv; 
 
 /**
  * Renderiza a interface principal do Ponto de Venda (PDV).
@@ -9,6 +14,7 @@ import { renderSaleItems, openPaymentModal, cancelSale, handleSearchInput, hideS
 export function renderPedidos() {
     const contentArea = document.getElementById('content-area');
     
+    // Este HTML contém os novos campos e chama as funções corretas do 'pdv' (que está agora em window.pdv)
     contentArea.innerHTML = `
         <div class="flex flex-col lg:flex-row h-[80vh] w-full gap-4">
             
@@ -25,7 +31,7 @@ export function renderPedidos() {
                             id="barcode-input" 
                             placeholder="Digite 2 ou mais letras para buscar..."
                             class="w-full p-3 pl-10 border border-gray-300 rounded-xl focus:ring-orange-500 focus:border-orange-500 transition duration-150"
-                            oninput="pdv.handleSearchInput(event)"
+                            oninput="pdv.handleSearchInput(event)" 
                             onblur="pdv.hideSearchDropdown()"
                             autocomplete="off">
                     </div>
@@ -47,6 +53,7 @@ export function renderPedidos() {
                 <!-- Lista de Itens da Venda -->
                 <div id="sale-items-list" class="flex-1 overflow-y-auto p-2">
                     <!-- Os itens da venda (<div>) serão injetados aqui pelo pdv.js -->
+                    <p class="text-gray-500 text-center mt-4">Nenhum item na venda.</p> 
                 </div>
             </div>
             
@@ -71,6 +78,7 @@ export function renderPedidos() {
                         type="number"
                         id="sale-general-discount"
                         value="0.00"
+                        step="0.01" 
                         onchange="pdv.updateGeneralDiscount(this.value)"
                         class="w-24 p-1 rounded-lg bg-gray-700 text-white text-right font-semibold border border-gray-600 focus:ring-orange-500 focus:border-orange-500"
                     >
@@ -99,12 +107,49 @@ export function renderPedidos() {
                     <p>Atalhos:</p>
                     <p>F1: Finalizar Venda</p>
                     <p>F4: Cancelar Venda</p>
+                    <p>ESC: Limpar Busca</p> 
                 </div>
             </div>
         </div>
     `;
     
-    // Renderiza os itens iniciais (vazio)
-    renderSaleItems();
+    // Adiciona listener para atalhos DEPOIS que o HTML for renderizado
+    // Remove listener antigo para garantir que não haja duplicatas
+    document.removeEventListener('keydown', handlePDVShortcuts); 
+    document.addEventListener('keydown', handlePDVShortcuts);
+
+    // Renderiza os itens iniciais (vazio) - Chama a função importada
+    pdv.renderSaleItems(); 
+}
+
+// Handler de Atalhos do Teclado (agora local a este módulo)
+function handlePDVShortcuts(e) {
+    // Importante: Verifica se estamos realmente na tela de pedidos
+    const contentArea = document.getElementById('content-area');
+    // Uma forma simples de verificar é se o input de busca existe
+    if (!document.getElementById('barcode-input')) {
+        document.removeEventListener('keydown', handlePDVShortcuts); // Remove o listener se não estivermos no PDV
+        return; 
+    }
+
+    if (e.key === 'F1') {
+        e.preventDefault();
+        pdv.openPaymentModal();
+    }
+    if (e.key === 'F4') {
+        e.preventDefault();
+        pdv.cancelSale();
+    }
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        const searchInput = document.getElementById('barcode-input');
+        if (searchInput) {
+            searchInput.value = '';
+            // Dispara o evento 'input' manualmente para limpar a lista
+            searchInput.dispatchEvent(new Event('input')); 
+        }
+        const resultsList = document.getElementById('search-results-list');
+        if(resultsList) resultsList.classList.add('hidden');
+    }
 }
 
