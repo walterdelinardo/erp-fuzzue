@@ -12,6 +12,7 @@ const productRoutes = require('./products');
 const supplierRoutes = require('./suppliers');
 const salesRoutes = require('./sales');
 const inventoryRoutes = require('./inventory');
+const dashboardRoutes = require('./dashboard');
 
 
 const router = express.Router();
@@ -42,12 +43,14 @@ router.get('/status', async (req, res) => {
  * /api/suppliers -> supplierRoutes
  * /api/sales     -> salesRoutes
  * /api/inventory   -> inventoryRoutes
+ * /api/dashboard   -> dashboardRoutes
  */
+
 router.use('/auth', authRoutes);        // <-- ADICIONADO (POST /api/auth/login passa a existir)
 router.use('/products', productRoutes);
 router.use('/suppliers', supplierRoutes);
 router.use('/sales', salesRoutes);
 router.use('/inventory', inventoryRoutes);
-
+router.use('/dashboard', dashboardRoutes);
 
 module.exports = router;
