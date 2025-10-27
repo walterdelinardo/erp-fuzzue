@@ -6,18 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome (ícones simples) -->
+    <!-- Ícones -->
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-        integrity="sha512-..."
         crossorigin="anonymous"
         referrerpolicy="no-referrer"
     />
 </head>
 <body class="bg-gray-100 text-gray-800">
 
-    <!-- APP WRAPPER (visível após login) -->
+    <!-- WRAPPER DO APP (mostrado após login) -->
     <div id="app-wrapper" class="hidden h-screen flex">
 
         <!-- SIDEBAR -->
@@ -27,32 +26,32 @@
             </div>
 
             <nav class="flex-1 p-4 space-y-2 text-sm">
-                <button data-route="dashboard" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
+                <button data-module="dashboard" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
                     <i class="fa-solid fa-chart-line text-green-400"></i>
                     <span>Dashboard</span>
                 </button>
 
-                <button data-route="products" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
+                <button data-module="products" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
                     <i class="fa-solid fa-box text-yellow-400"></i>
                     <span>Produtos</span>
                 </button>
 
-                <button data-route="suppliers" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
+                <button data-module="suppliers" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
                     <i class="fa-solid fa-truck-field text-blue-400"></i>
                     <span>Fornecedores</span>
                 </button>
 
-                <button data-route="inventory" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
+                <button data-module="inventory" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
                     <i class="fa-solid fa-warehouse text-purple-400"></i>
                     <span>Estoque</span>
                 </button>
 
-                <button data-route="purchase" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
+                <button data-module="purchase" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
                     <i class="fa-solid fa-file-invoice-dollar text-orange-400"></i>
                     <span>Ordens de Compra</span>
                 </button>
 
-                <button data-route="sales" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
+                <button data-module="sales" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
                     <i class="fa-solid fa-receipt text-teal-400"></i>
                     <span>Vendas</span>
                 </button>
@@ -66,332 +65,13 @@
             </div>
         </aside>
 
-        <!-- MAIN CONTENT -->
-        <main class="flex-1 overflow-y-auto p-6 space-y-8">
-
-            <!-- DASHBOARD VIEW -->
-            <section id="view-dashboard" class="view hidden">
-                <div class="text-xl font-semibold mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-chart-line text-green-600"></i>
-                    <span>Dashboard</span>
-                </div>
-
-                <div id="dash-status" class="text-sm text-gray-500 mb-4"></div>
-
-                <!-- KPIs cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="bg-white rounded-xl shadow p-4">
-                        <div class="text-xs text-gray-500">Vendido Hoje</div>
-                        <div id="dash-total-today" class="text-2xl font-bold text-gray-800">R$ 0,00</div>
-                    </div>
-
-                    <div class="bg-white rounded-xl shadow p-4">
-                        <div class="text-xs text-gray-500">Vendido no Mês</div>
-                        <div id="dash-total-month" class="text-2xl font-bold text-gray-800">R$ 0,00</div>
-                    </div>
-
-                    <div class="bg-white rounded-xl shadow p-4">
-                        <div class="text-xs text-gray-500">Vendas em Aberto</div>
-                        <div id="dash-open-sales" class="text-2xl font-bold text-gray-800">0</div>
-                    </div>
-                </div>
-
-                <!-- Top produtos e Estoque baixo -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-                    <div class="bg-white rounded-xl shadow p-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="font-semibold text-gray-700 flex items-center gap-2">
-                                <i class="fa-solid fa-fire text-red-500"></i>
-                                Mais vendidos (30 dias)
-                            </div>
-                        </div>
-                        <table class="w-full text-sm">
-                            <thead class="text-left text-gray-500 border-b">
-                                <tr>
-                                    <th class="px-2 py-1">Produto</th>
-                                    <th class="px-2 py-1 text-right">Qtde</th>
-                                    <th class="px-2 py-1 text-right">Receita</th>
-                                </tr>
-                            </thead>
-                            <tbody id="dash-top-products"></tbody>
-                        </table>
-                    </div>
-
-                    <div class="bg-white rounded-xl shadow p-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="font-semibold text-gray-700 flex items-center gap-2">
-                                <i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>
-                                Estoque Baixo
-                            </div>
-                        </div>
-                        <table class="w-full text-sm">
-                            <thead class="text-left text-gray-500 border-b">
-                                <tr>
-                                    <th class="px-2 py-1">Produto</th>
-                                    <th class="px-2 py-1">SKU</th>
-                                    <th class="px-2 py-1 text-right">Estoque</th>
-                                    <th class="px-2 py-1 text-right">Preço</th>
-                                </tr>
-                            </thead>
-                            <tbody id="dash-low-stock"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Movimentações recentes -->
-                <div class="bg-white rounded-xl shadow p-4 mt-8">
-                    <div class="font-semibold text-gray-700 flex items-center gap-2 mb-2">
-                        <i class="fa-solid fa-clock-rotate-left text-purple-500"></i>
-                        Movimentações Recentes de Estoque
-                    </div>
-
-                    <table class="w-full text-sm">
-                        <thead class="text-left text-gray-500 border-b">
-                            <tr>
-                                <th class="px-2 py-1">Produto</th>
-                                <th class="px-2 py-1">Tipo</th>
-                                <th class="px-2 py-1 text-right">Qtd</th>
-                                <th class="px-2 py-1">Motivo</th>
-                                <th class="px-2 py-1">Responsável</th>
-                                <th class="px-2 py-1">Data</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dash-movements"></tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- PRODUCTS VIEW -->
-            <section id="view-products" class="view hidden">
-                <div class="flex items-start justify-between mb-4">
-                    <div class="text-xl font-semibold flex items-center gap-2">
-                        <i class="fa-solid fa-box text-yellow-600"></i>
-                        <span>Produtos</span>
-                    </div>
-
-                    <button id="btn-new-product" class="bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium px-3 py-2 rounded-lg">
-                        + Novo Produto
-                    </button>
-                </div>
-
-                <div id="products-status" class="text-sm text-gray-500 mb-2"></div>
-
-                <div class="bg-white rounded-xl shadow overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="text-left text-gray-500 border-b">
-                            <tr>
-                                <th class="px-2 py-1">ID</th>
-                                <th class="px-2 py-1">Nome</th>
-                                <th class="px-2 py-1">SKU</th>
-                                <th class="px-2 py-1">NCM</th>
-                                <th class="px-2 py-1 text-right">Estoque</th>
-                                <th class="px-2 py-1 text-right">Preço Venda</th>
-                                <th class="px-2 py-1">Fornecedor</th>
-                                <th class="px-2 py-1 text-right">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="products-tbody"></tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- SUPPLIERS VIEW -->
-            <section id="view-suppliers" class="view hidden">
-                <div class="flex items-start justify-between mb-4">
-                    <div class="text-xl font-semibold flex items-center gap-2">
-                        <i class="fa-solid fa-truck-field text-blue-600"></i>
-                        <span>Fornecedores</span>
-                    </div>
-
-                    <button id="btn-new-supplier" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-2 rounded-lg">
-                        + Novo Fornecedor
-                    </button>
-                </div>
-
-                <div id="suppliers-status" class="text-sm text-gray-500 mb-2"></div>
-
-                <div class="bg-white rounded-xl shadow overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="text-left text-gray-500 border-b">
-                            <tr>
-                                <th class="px-2 py-1">ID</th>
-                                <th class="px-2 py-1">Nome</th>
-                                <th class="px-2 py-1">CNPJ/CPF</th>
-                                <th class="px-2 py-1">Telefone</th>
-                                <th class="px-2 py-1">Email</th>
-                                <th class="px-2 py-1 text-right">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="suppliers-tbody"></tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- INVENTORY VIEW -->
-            <section id="view-inventory" class="view hidden">
-                <div class="text-xl font-semibold flex items-center gap-2 mb-4">
-                    <i class="fa-solid fa-warehouse text-purple-600"></i>
-                    <span>Estoque / Ajustes</span>
-                </div>
-
-                <div class="bg-white rounded-xl shadow p-4 mb-6">
-                    <div class="text-sm font-semibold text-gray-700 mb-3">Registrar Entrada / Saída Manual</div>
-                    <form id="inventory-move-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div>
-                            <label class="block text-gray-600 text-xs mb-1">ID Produto</label>
-                            <input id="inv-product-id" class="w-full border rounded px-2 py-1" placeholder="ex: 12">
-                        </div>
-
-                        <div>
-                            <label class="block text-gray-600 text-xs mb-1">Tipo</label>
-                            <select id="inv-type" class="w-full border rounded px-2 py-1">
-                                <option value="entrada">Entrada</option>
-                                <option value="saida">Saída</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-gray-600 text-xs mb-1">Quantidade</label>
-                            <input id="inv-qty" class="w-full border rounded px-2 py-1" placeholder="ex: 5.5">
-                        </div>
-
-                        <div class="md:col-span-2">
-                            <label class="block text-gray-600 text-xs mb-1">Motivo / Observação</label>
-                            <input id="inv-reason" class="w-full border rounded px-2 py-1" placeholder="Devolução pedido #123">
-                        </div>
-
-                        <div>
-                            <label class="block text-gray-600 text-xs mb-1">Filial / Local</label>
-                            <input id="inv-branch" class="w-full border rounded px-2 py-1" placeholder="Depósito Central">
-                        </div>
-
-                        <div class="md:col-span-3 flex justify-end">
-                            <button id="btn-inv-move" class="bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium px-3 py-2 rounded-lg">
-                                Registrar
-                            </button>
-                        </div>
-                    </form>
-
-                    <div id="inv-feedback" class="text-xs text-gray-600 mt-2"></div>
-                </div>
-
-                <div class="bg-white rounded-xl shadow p-4">
-                    <div class="text-sm font-semibold text-gray-700 mb-3">Histórico recente de movimentações</div>
-                    <table class="w-full text-sm">
-                        <thead class="text-left text-gray-500 border-b">
-                            <tr>
-                                <th class="px-2 py-1">Produto</th>
-                                <th class="px-2 py-1">Tipo</th>
-                                <th class="px-2 py-1 text-right">Qtd</th>
-                                <th class="px-2 py-1">Motivo</th>
-                                <th class="px-2 py-1">Filial</th>
-                                <th class="px-2 py-1 text-xs">Data</th>
-                            </tr>
-                        </thead>
-                        <tbody id="inv-movements-body"></tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- PURCHASE VIEW -->
-            <section id="view-purchase" class="view hidden">
-                <div class="flex items-start justify-between mb-4">
-                    <div class="text-xl font-semibold flex items-center gap-2">
-                        <i class="fa-solid fa-file-invoice-dollar text-orange-600"></i>
-                        <span>Ordens de Compra</span>
-                    </div>
-
-                    <button id="btn-new-po" class="bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium px-3 py-2 rounded-lg">
-                        + Nova Ordem de Compra
-                    </button>
-                </div>
-
-                <div id="po-status" class="text-sm text-gray-500 mb-2"></div>
-
-                <div class="bg-white rounded-xl shadow overflow-x-auto mb-8">
-                    <table class="min-w-full text-sm">
-                        <thead class="text-left text-gray-500 border-b">
-                            <tr>
-                                <th class="px-2 py-1">#</th>
-                                <th class="px-2 py-1">Fornecedor</th>
-                                <th class="px-2 py-1">Status</th>
-                                <th class="px-2 py-1 text-right">Total</th>
-                                <th class="px-2 py-1">Criado em</th>
-                                <th class="px-2 py-1 text-right">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="po-tbody"></tbody>
-                    </table>
-                </div>
-
-                <!-- Recebimento parcial / registrar chegada -->
-                <div class="bg-white rounded-xl shadow p-4">
-                    <div class="text-sm font-semibold text-gray-700 mb-3">Registrar Recebimento de Compra</div>
-                    <form id="po-receive-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div>
-                            <label class="block text-gray-600 text-xs mb-1">OC # (purchase_order_id)</label>
-                            <input id="po-id" class="w-full border rounded px-2 py-1" placeholder="ex: 10">
-                        </div>
-
-                        <div>
-                            <label class="block text-gray-600 text-xs mb-1">Produto ID</label>
-                            <input id="po-product-id" class="w-full border rounded px-2 py-1" placeholder="ex: 12">
-                        </div>
-
-                        <div>
-                            <label class="block text-gray-600 text-xs mb-1">Quantidade Recebida</label>
-                            <input id="po-received-qty" class="w-full border rounded px-2 py-1" placeholder="ex: 50">
-                        </div>
-
-                        <div class="md:col-span-2">
-                            <label class="block text-gray-600 text-xs mb-1">Filial / Local</label>
-                            <input id="po-branch" class="w-full border rounded px-2 py-1" placeholder="Depósito Zona Oeste">
-                        </div>
-
-                        <div>
-                            <label class="block text-gray-600 text-xs mb-1">Obs / Nota Fiscal</label>
-                            <input id="po-note" class="w-full border rounded px-2 py-1" placeholder="NF 5512 recebida">
-                        </div>
-
-                        <div class="md:col-span-3 flex justify-end">
-                            <button id="btn-po-receive" class="bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium px-3 py-2 rounded-lg">
-                                Registrar Recebimento
-                            </button>
-                        </div>
-                    </form>
-
-                    <div id="po-feedback" class="text-xs text-gray-600 mt-2"></div>
-                </div>
-            </section>
-
-            <!-- SALES VIEW (placeholder inicial) -->
-            <section id="view-sales" class="view hidden">
-                <div class="text-xl font-semibold flex items-center gap-2 mb-4">
-                    <i class="fa-solid fa-receipt text-teal-600"></i>
-                    <span>Vendas</span>
-                </div>
-
-                <div id="sales-status" class="text-sm text-gray-500 mb-2"></div>
-
-                <div class="bg-white rounded-xl shadow overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="text-left text-gray-500 border-b">
-                            <tr>
-                                <th class="px-2 py-1">#</th>
-                                <th class="px-2 py-1">Cliente</th>
-                                <th class="px-2 py-1">Status</th>
-                                <th class="px-2 py-1 text-right">Total</th>
-                                <th class="px-2 py-1">Criado em</th>
-                            </tr>
-                        </thead>
-                        <tbody id="sales-tbody"></tbody>
-                    </table>
-                </div>
-            </section>
+        <!-- ÁREA DINÂMICA -->
+        <main id="app-content" class="flex-1 overflow-y-auto p-6 space-y-8">
+            <!-- O HTML dos módulos é injetado aqui pelo router.js -->
         </main>
     </div>
 
-    <!-- MODAL: FORM PRODUTO -->
+    <!-- MODAL: FORM PRODUTO (fica global porque vários módulos usam produto) -->
     <div id="product-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-lg w-full max-w-xl p-4 text-sm">
             <div class="flex items-start justify-between mb-3">
@@ -426,7 +106,7 @@
 
                 <div>
                     <label class="block text-gray-600 text-xs mb-1">Categoria</label>
-                    <input id="prod-category" class="w-full border rounded px-2 py-1" placeholder="Aço, Elétrica...">
+                    <input id="prod-category" class="w-full border rounded px-2 py-1">
                 </div>
 
                 <div class="col-span-2">
@@ -436,17 +116,17 @@
 
                 <div>
                     <label class="block text-gray-600 text-xs mb-1">Custo (R$)</label>
-                    <input id="prod-cost" class="w-full border rounded px-2 py-1" type="number" step="0.01">
+                    <input id="prod-cost" type="number" step="0.01" class="w-full border rounded px-2 py-1">
                 </div>
 
                 <div>
                     <label class="block text-gray-600 text-xs mb-1">Preço Venda (R$)</label>
-                    <input id="prod-price" class="w-full border rounded px-2 py-1" type="number" step="0.01">
+                    <input id="prod-price" type="number" step="0.01" class="w-full border rounded px-2 py-1">
                 </div>
 
                 <div>
                     <label class="block text-gray-600 text-xs mb-1">Estoque Inicial</label>
-                    <input id="prod-stock" class="w-full border rounded px-2 py-1" type="number" step="0.001">
+                    <input id="prod-stock" type="number" step="0.001" class="w-full border rounded px-2 py-1">
                 </div>
 
                 <div>
@@ -495,11 +175,11 @@
 
                 <div>
                     <label class="block text-gray-600 text-xs mb-1">Email</label>
-                    <input id="sup-email" class="w-full border rounded px-2 py-1" type="email">
+                    <input id="sup-email" type="email" class="w-full border rounded px-2 py-1">
                 </div>
 
                 <div class="col-span-2">
-                    <label class="block text-gray-600 text-xs mb-1">Endereço / Observações</label>
+                    <label class="block text-gray-600 text-xs mb-1">Endereço / Obs</label>
                     <input id="sup-address" class="w-full border rounded px-2 py-1">
                 </div>
 
@@ -512,29 +192,7 @@
         </div>
     </div>
 
-    <!-- IMPORTA JS -->
-    <script type="module">
-        import { initializeAuth } from './js/auth.js';
-        import { initDashboardPage } from './js/dashboard.js';
-        import { initProductsPage } from './js/products.js';
-        import { initSuppliersPage } from './js/suppliers.js';
-        import { initInventoryPage } from './js/inventory-ui.js';
-        import { initPurchasePage } from './js/purchase-ui.js';
-        // placeholder - você pode criar similar ao purchase-ui depois
-        const initSalesPage = () => {};
-    
-        import { setupRouter } from './js/router.js';
-    
-        initializeAuth().then(() => {
-            setupRouter({
-                dashboard: initDashboardPage,
-                products: initProductsPage,
-                suppliers: initSuppliersPage,
-                inventory: initInventoryPage,
-                purchase: initPurchasePage,
-                sales: initSalesPage,
-            });
-        });
-    </script>
+    <!-- Router + Auth -->
+    <script type="module" src="./js/router.js"></script>
 </body>
 </html>
