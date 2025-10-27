@@ -167,11 +167,7 @@ function renderSearchResults(products) {
 
     products.forEach(prod => {
         const row = document.createElement('button');
-        row.className = `
-            search-result-item
-            w-full flex justify-between text-left text-sm p-3 border-b border-gray-200
-            cursor-pointer
-        `;
+        row.className = 'w-full flex justify-between text-left text-sm p-3 hover:bg-gray-100';
         row.innerHTML = `
             <div class="flex-1">
                 <div class="font-medium text-gray-800">${prod.name}</div>
