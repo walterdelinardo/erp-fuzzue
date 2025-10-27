@@ -1,97 +1,96 @@
-/**
- * public/js/modules/dashboard.js
- * * Módulo de renderização do Dashboard.
- */
-import { contentArea } from '../ui.js';
-import { allProducts, mockStores } from '../state.js';
+// public/js/dashboard.js
 
-/**
- * Verifica quantos produtos estão abaixo do estoque mínimo.
- * @returns {number} A contagem de produtos com estoque baixo.
- */
-function checkLowStock() {
-    if (!allProducts || allProducts.length === 0) {
-        return 0;
+async function apiGetDashboard() {
+    const resp = await fetch('/api/dashboard');
+    const data = await resp.json();
+    if (!data.success) {
+        throw new Error('Falha ao carregar dashboard');
     }
-    return allProducts.filter(p => (p.stock || 0) < (p.min_stock || 0)).length;
+    return data.data;
 }
 
-/**
- * Renderiza o conteúdo da tela de Dashboard.
- */
-function renderDashboard() {
-    const lowStockCount = checkLowStock();
-    const alertClass = lowStockCount > 0 ? 'border-red-500 alert-critical' : 'border-green-500';
-    const alertIconColor = lowStockCount > 0 ? 'text-red-500' : 'text-green-500';
+function renderTotals(totals) {
+    const todayEl = document.getElementById('dash-total-today');
+    const monthEl = document.getElementById('dash-total-month');
+    const openEl  = document.getElementById('dash-open-sales');
 
-    contentArea.innerHTML = `
-        <h2 class="text-2xl font-bold mb-6 text-gray-900">Visão Geral</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <!-- Card 1: Total de Lojas (Mock) -->
-            <div class="bg-gray-50 p-5 rounded-xl shadow-md border-t-4 border-orange-600">
-                <div class="flex justify-between items-center">
-                    <span class="text-lg font-semibold text-gray-700">Total de Lojas</span>
-                    <i class="fas fa-store text-2xl text-orange-600"></i>
-                </div>
-                <p id="stat-stores" class="text-4xl font-extrabold text-gray-900 mt-2">${mockStores.length}</p>
-                <p class="text-sm text-gray-500 mt-1">Lojas ativas no sistema</p>
-            </div>
-
-            <!-- Card 2: Faturamento (Mock) -->
-            <div class="bg-gray-50 p-5 rounded-xl shadow-md border-t-4 border-gray-900">
-                <div class="flex justify-between items-center">
-                    <span class="text-lg font-semibold text-gray-700">Faturamento (Mês)</span>
-                    <i class="fas fa-dollar-sign text-2xl text-gray-900"></i>
-                </div>
-                <p id="stat-faturamento" class="text-4xl font-extrabold text-gray-900 mt-2">R$ 45.000</p>
-                <p class="text-sm text-gray-500 mt-1">Meta alcançada: 75%</p>
-            </div>
-
-            <!-- Card 3: Clientes Ativos (Mock) -->
-            <div class="bg-gray-50 p-5 rounded-xl shadow-md border-t-4 border-orange-600">
-                <div class="flex justify-between items-center">
-                    <span class="text-lg font-semibold text-gray-700">Clientes Ativos</span>
-                    <i class="fas fa-users text-2xl text-orange-600"></i>
-                </div>
-                <p id="stat-clientes" class="text-4xl font-extrabold text-gray-900 mt-2">128</p>
-                <p class="text-sm text-gray-500 mt-1">3 novos clientes esta semana</p>
-            </div>
-            
-            <!-- Card 4: Alerta de Estoque (Dados Reais) -->
-            <div class="bg-gray-50 p-5 rounded-xl shadow-md border-t-4 ${alertClass}">
-                <div class="flex justify-between items-center">
-                    <span class="text-lg font-semibold text-gray-700">Itens em Alerta</span>
-                    <i class="fas fa-exclamation-triangle text-2xl ${alertIconColor}"></i>
-                </div>
-                <p id="stat-alerta" class="text-4xl font-extrabold text-gray-900 mt-2">${lowStockCount}</p>
-                <p class="text-sm text-gray-500 mt-1">${lowStockCount > 0 ? 'Atenção! Necessário reabastecer.' : 'Nenhum alerta pendente.'}</p>
-            </div>
-        </div>
-
-        <!-- Seção Gráfico (Mock) -->
-        <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-            <h3 class="text-xl font-bold mb-4 text-gray-800">Faturamento e Pedidos por Mês (Mock)</h3>
-            <div class="h-64 bg-gray-100 rounded-lg flex items-center justify-center text-gray-500">
-                [Gráfico de Vendas por Mês aqui]
-            </div>
-        </div>
-
-        <!-- Detalhe do Alerta (Dados Reais) -->
-        <div class="mt-8">
-            <h3 class="text-xl font-bold mb-4 ${lowStockCount > 0 ? 'text-red-600' : 'text-gray-900'}">Alerta de Estoque Baixo</h3>
-            ${lowStockCount > 0 ? `
-                <div class="bg-red-50 border border-red-200 p-4 mt-4 rounded-xl max-h-48 overflow-y-auto">
-                    ${allProducts.filter(p => (p.stock || 0) < (p.min_stock || 0)).map(p => `
-                        <p class="text-red-700 text-sm">
-                            <i class="fas fa-exclamation-circle mr-2"></i> 
-                            <strong>${p.name} (SKU: ${p.sku})</strong> - Estoque: ${p.stock} / Mínimo: ${p.min_stock}
-                        </p>
-                    `).join('')}
-                </div>
-            ` : '<p class="text-green-600 mt-4 text-sm">Nenhum produto em nível de estoque crítico.</p>'}
-        </div>
-    `;
+    if (todayEl) todayEl.textContent = `R$ ${totals.total_sales_today.toFixed(2)}`;
+    if (monthEl) monthEl.textContent = `R$ ${totals.total_sales_month.toFixed(2)}`;
+    if (openEl)  openEl.textContent  = `${totals.open_sales_count}`;
 }
 
-export { renderDashboard };
+function renderTopProducts(rows) {
+    const tbody = document.getElementById('dash-top-products');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    rows.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-b';
+        tr.innerHTML = `
+            <td class="px-2 py-1">${p.product_name}</td>
+            <td class="px-2 py-1 text-right">${p.total_qty_sold}</td>
+            <td class="px-2 py-1 text-right">R$ ${p.total_revenue.toFixed(2)}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function renderLowStock(rows) {
+    const tbody = document.getElementById('dash-low-stock');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    rows.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-b';
+        tr.innerHTML = `
+            <td class="px-2 py-1">${item.name}</td>
+            <td class="px-2 py-1">${item.sku || ''}</td>
+            <td class="px-2 py-1 text-right">${item.stock}</td>
+            <td class="px-2 py-1 text-right">R$ ${item.sale_price.toFixed(2)}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function renderRecentMovements(rows) {
+    const tbody = document.getElementById('dash-movements');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    rows.forEach(mov => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-b';
+        tr.innerHTML = `
+            <td class="px-2 py-1">${mov.product_name || '(?)'}</td>
+            <td class="px-2 py-1">${mov.type === 'entrada' ? '➕ Entrada' : '➖ Saída'}</td>
+            <td class="px-2 py-1 text-right">${mov.quantity}</td>
+            <td class="px-2 py-1">${mov.reason || ''}</td>
+            <td class="px-2 py-1">${mov.created_by_name || ''}</td>
+            <td class="px-2 py-1 text-xs text-gray-500">${new Date(mov.created_at).toLocaleString()}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+async function initDashboardPage() {
+    const statusEl = document.getElementById('dash-status');
+    if (statusEl) statusEl.textContent = 'Carregando...';
+
+    try {
+        const data = await apiGetDashboard();
+
+        renderTotals(data.totals);
+        renderTopProducts(data.top_products);
+        renderLowStock(data.low_stock);
+        renderRecentMovements(data.recent_movements);
+
+        if (statusEl) statusEl.textContent = '';
+    } catch (err) {
+        console.error(err);
+        if (statusEl) statusEl.textContent = 'Erro ao carregar dashboard.';
+    }
+}
+
+export { initDashboardPage };
