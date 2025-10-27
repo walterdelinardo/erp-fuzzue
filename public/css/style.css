@@ -4,10 +4,11 @@
     --color-secondary: #1f2937; /* Preto/Cinza Escuro para contraste */
     --color-background: #f3f4f6; /* Cinza Claro */
 }
+
 body {
     font-family: 'Inter', sans-serif;
-    background-color: var(--color-background);
 }
+
 /* Estilos customizados para o scrollbar */
 .sidebar, .main-content, .overflow-y-auto {
     scrollbar-width: thin;
@@ -23,6 +24,7 @@ body {
 .sidebar::-webkit-scrollbar-track, .main-content::-webkit-scrollbar-track, .overflow-y-auto::-webkit-scrollbar-track {
     background: #e5e7eb;
 }
+
 .main-button {
     background-color: var(--color-primary);
     color: white;
@@ -35,6 +37,7 @@ body {
     background-color: #fdba74; /* Laranja bem claro para desabilitado */
     cursor: not-allowed;
 }
+
 /* Classe para Alerta Crítico */
 .alert-critical {
     border-color: #ef4444 !important; /* Vermelho forte */
@@ -72,4 +75,3 @@ body {
 .search-result-item:last-child {
     border-bottom: none;
 }
-
