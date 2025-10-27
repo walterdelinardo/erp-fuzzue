@@ -1,105 +1,49 @@
-/**
- * public/js/router.js
- * * Gerencia a navegação entre os módulos (rotas) da aplicação.
- */
-// REMOVIDO: import { setCurrentRoute } from './state.js';
-import { contentArea, updateSidebarActiveLink } from './ui.js';
+// public/js/router.js
 
-// **NOVO:** A rota atual agora é mantida aqui neste módulo
-let currentRoute = 'dashboard';
+// guarda qual é a rota atual
+let currentView = null;
 
-// Importa dinamicamente TODAS as funções de renderização dos módulos
-// Isso permite que o Webpack/Vite (futuramente) faça "code splitting"
-const modules = {
-    'dashboard': () => import('./modules/dashboard.js').then(m => m.renderDashboard),
-    'pedidos': () => import('./modules/sales.js').then(m => m.renderPedidos),
-    'clientes': () => import('./modules/clients.js').then(m => m.renderClientes),
-    'lojas': () => import('./modules/stores.js').then(m => m.renderLojas),
-    'produtos': () => import('./modules/products.js').then(m => m.renderProdutos),
-    'ncm': () => import('./modules/ncm.js').then(m => m.renderNcm),
-    'fornecedores': () => import('./modules/suppliers.js').then(m => m.renderFornecedores),
-    'relatorios': () => import('./modules/reports.js').then(m => m.renderRelatorios),
-    'usuarios': () => import('./modules/users.js').then(m => m.renderUsuarios),
-    'ajuda': () => import('./modules/help.js').then(m => m.renderHelp),
-    'configuracoes': () => import('./modules/settings.js').then(m => m.renderConfiguracoes),
-};
-
-/**
- * Mapeamento das rotas para as funções de renderização carregadas.
- * O 'handler' será preenchido quando o módulo for carregado.
- */
-const routes = {
-    'dashboard': { load: modules.dashboard, handler: null },
-    'pedidos': { load: modules.pedidos, handler: null },
-    'clientes': { load: modules.clientes, handler: null },
-    'lojas': { load: modules.lojas, handler: null },
-    'produtos': { load: modules.produtos, handler: null },
-    'ncm': { load: modules.ncm, handler: null },
-    'fornecedores': { load: modules.fornecedores, handler: null },
-    'relatorios': { load: modules.relatorios, handler: null },
-    'usuarios': { load: modules.usuarios, handler: null },
-    'ajuda': { load: modules.ajuda, handler: null },
-    'configuracoes': { load: modules.configuracoes, handler: null },
-};
-
-/**
- * Função de navegação principal. Carrega e exibe o módulo da rota solicitada.
- * @param {string} routeName - O nome da rota (ex: 'dashboard', 'produtos').
- */
-async function navigate(routeName) {
-    // Remove listeners de teclado antigos (importante para o PDV)
-    document.onkeydown = null;
-
-    // Define a rota padrão se a rota solicitada não existir
-    if (!routes[routeName]) {
-        routeName = 'dashboard';
-    }
-
-    // **NOVO:** Atualiza a variável local deste módulo
-    currentRoute = routeName;
-    console.log(`[Router] Navegando para: ${currentRoute}`); // Log de navegação
-
-    // Encontra a rota no mapeamento
-    const route = routes[routeName];
-
-    try {
-        // Mostra um loader enquanto o módulo carrega (especialmente na primeira vez)
-        if (!route.handler) {
-            console.log(`[Router] Carregando módulo para a rota: ${routeName}`);
-            contentArea.innerHTML = `<div class="flex justify-center items-center h-full min-h-[50vh]">
-                <i class="fas fa-spinner fa-spin text-2xl text-orange-600"></i>
-                <span class="ml-3 text-gray-600">Carregando módulo...</span>
-            </div>`;
-
-            // Carrega o módulo (import dinâmico) e armazena o handler
-            const renderFunction = await route.load();
-            route.handler = renderFunction;
-            console.log(`[Router] Módulo ${routeName} carregado.`);
+// mostra uma view e esconde as outras
+function showView(viewId) {
+    const allViews = document.querySelectorAll('.view');
+    allViews.forEach(v => {
+        if (v.id === `view-${viewId}`) {
+            v.classList.remove('hidden');
+        } else {
+            v.classList.add('hidden');
         }
+    });
 
-        // Adiciona classe de transição (fade-in)
-        contentArea.classList.remove('content-fade-in');
-        void contentArea.offsetWidth; // Força o "reflow" do navegador
+    currentView = viewId;
+}
 
-        // Chama a função de renderização do módulo, que preencherá o contentArea
-        console.log(`[Router] Renderizando rota: ${routeName}`);
-        await route.handler();
-        console.log(`[Router] Rota ${routeName} renderizada.`);
+// configura os botões do menu lateral
+function bindSidebar(onNavigate) {
+    const buttons = document.querySelectorAll('aside [data-route]');
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const route = btn.getAttribute('data-route');
+            onNavigate(route);
+        });
+    });
+}
 
-        contentArea.classList.add('content-fade-in');
+// setupRouter recebe um dicionário com { rota: funçãoInit }
+function setupRouter(routeInits) {
+    bindSidebar(async (route) => {
+        showView(route);
 
-        // Atualiza o link ativo na sidebar
-        updateSidebarActiveLink(routeName);
+        // se existir init pra essa rota, chama
+        if (routeInits[route]) {
+            routeInits[route]();
+        }
+    });
 
-    } catch (error) {
-        console.error(`Erro ao carregar ou renderizar a rota "${routeName}":`, error);
-        contentArea.innerHTML = `<div class="p-4 bg-red-100 border-l-4 border-red-500 text-red-700">
-            <h3 class="font-bold">Erro ao carregar módulo</h3>
-            <p>${error.message}</p>
-        </div>`;
+    // rota inicial padrão
+    showView('dashboard');
+    if (routeInits['dashboard']) {
+        routeInits['dashboard']();
     }
 }
 
-// Exporta a função de navegação e a rota atual
-export { navigate, currentRoute };
-
+export { setupRouter };
