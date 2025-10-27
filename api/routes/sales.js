@@ -1,72 +1,255 @@
 /**
  * api/routes/sales.js
- * * Define as rotas para Vendas e Transações (/api/sales)
+ * Controle de Vendas / PDV
  */
 const express = require('express');
-const { pool, handleError } = require('../db'); // Importa o pool e o handler de erro
+const { pool, handleError } = require('../db');
 
 const router = express.Router();
 
-// ROTA: POST /api/sales/finalize
-// (Lógica de transação movida do server.js original)
-router.post('/finalize', async (req, res) => {
-    const { sale, payments, userId } = req.body;
-    const client = await pool.connect(); // Obtém um cliente do pool para a transação
-
+/**
+ * GET /api/sales
+ * Lista vendas realizadas
+ */
+router.get('/', async (req, res) => {
     try {
-        await client.query('BEGIN'); // INICIA A TRANSAÇÃO POSTGRES
-
-        console.log(`Iniciando transação atômica para a venda do usuário: ${userId}`);
-
-        // 1. Itera sobre cada item da venda para dar baixa no estoque
-        for (const item of sale.items) {
-            const productId = item.product_id;
-            const quantityToDecrement = item.quantity;
-
-            // 2. Tenta dar baixa no estoque no banco de dados.
-            const result = await client.query(
-                `
-                UPDATE products
-                SET stock = stock - $1, last_sale_at = NOW()
-                WHERE id = $2 AND stock >= $1
-                RETURNING id, stock;
-                `,
-                [quantityToDecrement, productId]
-            );
-
-            // 3. Verifica se a atualização foi bem-sucedida
-            if (result.rowCount === 0) {
-                await client.query('ROLLBACK'); 
-                return res.status(409).json({ 
-                    success: false, 
-                    message: `Falha: Estoque insuficiente para o produto SKU ${productId}. Transação Desfeita.`,
-                    item: item.name
-                });
-            }
-        }
-
-        // 4. Salva o registro da venda no PostgreSQL (Após a baixa de estoque)
-        await client.query(
-            `
-            INSERT INTO sales (user_id, total, items_data, payment_data, created_at)
-            VALUES ($1, $2, $3, $4, NOW());
-            `,
-            [userId, sale.total, JSON.stringify(sale.items), JSON.stringify(payments)]
+        const result = await pool.query(
+            `SELECT 
+                s.id,
+                s.customer_name,
+                s.status,
+                s.total,
+                s.created_at,
+                u.full_name AS created_by_name
+             FROM sales s
+             LEFT JOIN users u ON u.id = s.created_by
+             ORDER BY s.id DESC`
         );
 
-        await client.query('COMMIT'); // FINALIZA A TRANSAÇÃO
-        
-        res.status(200).json({ 
-            success: true, 
-            message: "Venda e baixa de estoque concluídas com sucesso!",
-            invoicing_link: "https://mock-asaas.com/invoice/final" 
+        res.json({
+            success: true,
+            data: result.rows
+        });
+    } catch (err) {
+        handleError(res, err, "Erro ao listar vendas.");
+    }
+});
+
+
+/**
+ * GET /api/sales/:id
+ * Retorna uma venda com os itens
+ */
+router.get('/:id', async (req, res) => {
+    const { id } = req.params;
+
+    const client = await pool.connect();
+    try {
+        // pega cabeçalho da venda
+        const saleRes = await client.query(
+            `SELECT 
+                s.id,
+                s.customer_name,
+                s.status,
+                s.total,
+                s.created_at,
+                u.full_name AS created_by_name
+             FROM sales s
+             LEFT JOIN users u ON u.id = s.created_by
+             WHERE s.id = $1`,
+            [id]
+        );
+
+        if (saleRes.rows.length === 0) {
+            client.release();
+            return res.status(404).json({
+                success: false,
+                message: "Venda não encontrada."
+            });
+        }
+
+        // pega itens
+        const itemsRes = await client.query(
+            `SELECT
+                si.id,
+                si.product_id,
+                p.name AS product_name,
+                si.quantity,
+                si.unit_price,
+                si.total
+             FROM sale_items si
+             LEFT JOIN products p ON p.id = si.product_id
+             WHERE si.sale_id = $1`,
+            [id]
+        );
+
+        client.release();
+
+        res.json({
+            success: true,
+            data: {
+                sale: saleRes.rows[0],
+                items: itemsRes.rows
+            }
         });
 
-    } catch (error) {
-        await client.query('ROLLBACK'); 
-        handleError(res, error, "Erro fatal ao processar a venda.");
+    } catch (err) {
+        client.release();
+        handleError(res, err, "Erro ao buscar venda.");
+    }
+});
+
+
+/**
+ * POST /api/sales
+ * Cria uma venda, registra itens e baixa estoque
+ *
+ * body esperado:
+ * {
+ *   "customer_name": "Fulano",
+ *   "created_by": 1,
+ *   "items": [
+ *      { "product_id": 12, "quantity": 3, "unit_price": 15.90 },
+ *      { "product_id": 5,  "quantity": 1, "unit_price": 120.00 }
+ *   ]
+ * }
+ */
+router.post('/', async (req, res) => {
+    const { customer_name, created_by, items } = req.body;
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({
+            success: false,
+            message: "A venda precisa ter pelo menos 1 item."
+        });
+    }
+
+    // vamos trabalhar com transação
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        // 1. cria cabeçalho da venda com total temporário 0
+        const saleInsertRes = await client.query(
+            `INSERT INTO sales (customer_name, status, total, created_by)
+             VALUES ($1, 'closed', 0, $2)
+             RETURNING id, created_at`,
+            [
+                customer_name || null,
+                created_by || null
+            ]
+        );
+
+        const saleId = saleInsertRes.rows[0].id;
+
+        let runningTotal = 0;
+
+        // 2. para cada item da venda
+        for (const item of items) {
+            const { product_id, quantity, unit_price } = item;
+
+            const qty = parseFloat(quantity);
+            const price = parseFloat(unit_price);
+
+            if (!product_id || !qty || !price || qty <= 0 || price < 0) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({
+                    success: false,
+                    message: "Item inválido na venda."
+                });
+            }
+
+            // 2.1 checar e bloquear o produto + estoque atual
+            const prodRes = await client.query(
+                `SELECT id, name, stock
+                 FROM products
+                 WHERE id = $1
+                 FOR UPDATE`,
+                [product_id]
+            );
+
+            if (prodRes.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({
+                    success: false,
+                    message: `Produto ${product_id} não encontrado.`
+                });
+            }
+
+            const currentStock = parseFloat(prodRes.rows[0].stock) || 0;
+            const newStock = currentStock - qty;
+
+            if (newStock < 0) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({
+                    success: false,
+                    message: `Estoque insuficiente para o produto '${prodRes.rows[0].name}'.`
+                });
+            }
+
+            // 2.2 inserir o item da venda
+            const itemInsertRes = await client.query(
+                `INSERT INTO sale_items
+                    (sale_id, product_id, quantity, unit_price)
+                 VALUES
+                    ($1, $2, $3, $4)
+                 RETURNING id, quantity, unit_price`,
+                [saleId, product_id, qty, price]
+            );
+
+            // totaliza
+            const lineTotal = qty * price;
+            runningTotal += lineTotal;
+
+            // 2.3 registrar saída no histórico de estoque
+            await client.query(
+                `INSERT INTO inventory_movements
+                    (product_id, type, quantity, reason, branch, created_by)
+                 VALUES
+                    ($1, 'saida', $2, $3, $4, $5)`,
+                [
+                    product_id,
+                    qty,
+                    `Venda #${saleId}`,
+                    null,            // branch: podemos preencher depois com filial do PDV
+                    created_by || null
+                ]
+            );
+
+            // 2.4 atualizar estoque do produto
+            await client.query(
+                `UPDATE products
+                 SET stock = $1
+                 WHERE id = $2`,
+                [newStock, product_id]
+            );
+        }
+
+        // 3. atualizar total da venda
+        await client.query(
+            `UPDATE sales
+             SET total = $1
+             WHERE id = $2`,
+            [runningTotal, saleId]
+        );
+
+        await client.query('COMMIT');
+
+        res.status(201).json({
+            success: true,
+            message: "Venda registrada com sucesso.",
+            data: {
+                sale_id: saleId,
+                total: runningTotal
+            }
+        });
+
+    } catch (err) {
+        await client.query('ROLLBACK');
+        handleError(res, err, "Erro ao registrar venda.");
     } finally {
-        client.release(); // Libera o cliente de volta para o pool
+        client.release();
     }
 });
 
