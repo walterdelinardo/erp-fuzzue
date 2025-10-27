@@ -518,24 +518,21 @@
         import { initDashboardPage } from './js/dashboard.js';
         import { initProductsPage } from './js/products.js';
         import { initSuppliersPage } from './js/suppliers.js';
-        // vamos criar ainda:
-        // import { initInventoryPage } from './js/inventory-ui.js';
-        // import { initPurchasePage } from './js/purchase-ui.js';
-        // import { initSalesPage } from './js/sales-ui.js';
+        import { initInventoryPage } from './js/inventory-ui.js';
+        import { initPurchasePage } from './js/purchase-ui.js';
+        // placeholder - você pode criar similar ao purchase-ui depois
+        const initSalesPage = () => {};
+    
         import { setupRouter } from './js/router.js';
-
-        // fluxo:
-        // 1. auth inicializa e mostra login ou app-wrapper
-        // 2. router habilita navegação nos botões da sidebar
-        // 3. cada view chama seu init quando ativada
+    
         initializeAuth().then(() => {
             setupRouter({
                 dashboard: initDashboardPage,
                 products: initProductsPage,
                 suppliers: initSuppliersPage,
-                inventory: () => {}, // placeholder
-                purchase: () => {},  // placeholder
-                sales:    () => {},  // placeholder
+                inventory: initInventoryPage,
+                purchase: initPurchasePage,
+                sales: initSalesPage,
             });
         });
     </script>
