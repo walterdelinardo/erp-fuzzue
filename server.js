@@ -9,6 +9,7 @@ const path = require('path');
 
 const apiRoutes = require('./api/routes');       // index.js dentro de api/routes
 const authRoutes = require('./api/routes/auth'); // rota de auth que você me mandou
+const pdvRoutes = require('./server/modules/pdv');
 
 const app = express();
 const PORT = process.env.PORT || 40011;
@@ -16,6 +17,9 @@ const PORT = process.env.PORT || 40011;
 // --- Middlewares Essenciais ---
 app.use(express.json());
 app.use(cors({ origin: '*' }));
+
+// Rotas do PDV (antes do static e antes do catch-all!)
+app.use('/modules/pdv', pdvRoutes);
 
 // --- ORDEM DAS ROTAS ---
 

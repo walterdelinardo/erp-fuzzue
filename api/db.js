@@ -1,43 +1,71 @@
 /**
  * api/db.js
- * * Configuração centralizada e exportação do Pool de conexão do PostgreSQL.
+ * Conexão centralizada com PostgreSQL + helpers de query e transação.
  */
-require('dotenv').config(); // Carrega as variáveis do .env
+require('dotenv').config();
 const { Pool } = require('pg');
 
-// Validação da variável de ambiente
+// Validação básica das envs
 if (!process.env.DATABASE_URL) {
     console.error("ERRO CRÍTICO: A variável de ambiente DATABASE_URL não está definida.");
     console.error("Verifique se você criou o arquivo .env e reiniciou o servidor.");
-    process.exit(1); // Encerra a aplicação se o banco não estiver configurado
+    process.exit(1);
 }
 
+// Cria pool compartilhado
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    
-    // --- CORREÇÃO ADICIONADA AQUI ---
-    // Esta é a linha que estava faltando, copiada do seu server.js original.
-    // Ela habilita SSL em produção (necessário para Coolify, Heroku, etc.)
-    // e desabilita em desenvolvimento (local/codespace).
-    ssl: process.env.NODE_ENV === 'production' 
-         ? { rejectUnauthorized: false } 
-         : false
+    ssl: process.env.NODE_ENV === 'production'
+        ? { rejectUnauthorized: false }
+        : false
 });
 
 /**
- * Função utilitária para tratamento de erros de API.
- * @param {Response} res - O objeto de resposta do Express.
- * @param {Error} error - O objeto de erro.
- * @param {string} message - A mensagem de contexto.
+ * Execução direta de query (uso rápido, sem transação dedicada).
+ * @param {string} text - SQL com placeholders $1, $2...
+ * @param {Array} params - valores para os placeholders
+ * @returns {Promise<QueryResult>}
+ */
+async function query(text, params) {
+    return pool.query(text, params);
+}
+
+/**
+ * Pega um client dedicado para transações MANUAIS:
+ *  const client = await db.getClient();
+ *  try {
+ *    await client.query('BEGIN');
+ *    await client.query('SQL1', [...]);
+ *    await client.query('SQL2', [...]);
+ *    await client.query('COMMIT');
+ *  } catch (err) {
+ *    await client.query('ROLLBACK');
+ *    ...
+ *  } finally {
+ *    client.release();
+ *  }
+ *
+ * @returns {Promise<PoolClient>}
+ */
+async function getClient() {
+    const client = await pool.connect();
+    return client;
+}
+
+/**
+ * Função utilitária para resposta de erro em rotas HTTP.
  */
 function handleError(res, error, message) {
     console.error(message, error);
-    res.status(500).json({ success: false, message: `${message}: ${error.message}` });
+    res.status(500).json({
+        success: false,
+        message: `${message}: ${error.message}`
+    });
 }
 
-// Exporta o pool de conexão e o handler de erro
 module.exports = {
-    pool,
+    pool,         // caso alguém precise do pool cru
+    query,        // para SELECT/UPDATE simples fora de transação
+    getClient,    // para transações complexas (PDV)
     handleError
 };
-

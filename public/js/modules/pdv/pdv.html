@@ -1,161 +1,197 @@
-<div class="flex flex-col lg:flex-row gap-6">
+<div class="p-4 flex flex-col md:flex-row gap-6">
 
-    <!-- LADO ESQUERDO: busca + carrinho -->
-    <div class="flex-1 space-y-4">
+  <!-- LADO ESQUERDO: busca + tabela de itens -->
+  <div class="flex-1 flex flex-col gap-4">
 
-        <!-- Buscar produto -->
-        <div class="bg-white rounded-xl shadow p-4">
-            <div class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <i class="fa-solid fa-magnifying-glass text-gray-500"></i>
-                <span>Buscar Produto</span>
-            </div>
+    <!-- BUSCA DE PRODUTO COM AUTOCOMPLETE -->
+    <div class="w-full">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Buscar produto</label>
 
-            <div class="flex gap-2">
-                <input
-                    id="pdv-search"
-                    class="flex-1 border rounded-lg px-3 py-2 text-sm"
-                    placeholder="Digite nome, SKU, código interno..."
-                />
-                <button
-                    id="pdv-search-btn"
-                    class="bg-gray-800 hover:bg-gray-900 text-white text-sm font-medium px-3 py-2 rounded-lg"
-                >
-                    Buscar
-                </button>
-            </div>
+      <div class="relative w-full">
+        <input 
+          type="text"
+          id="searchProduct"
+          placeholder="Buscar por nome, SKU ou código de barras"
+          autocomplete="off"
+          class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
 
-            <div id="pdv-search-results" class="text-sm divide-y mt-4 max-h-48 overflow-y-auto border rounded-lg hidden">
-                <!-- Resultados da busca entram aqui -->
-        </div>
-
-        <!-- Carrinho -->
-        <div class="bg-white rounded-xl shadow p-4">
-            <div class="text-sm font-semibold text-gray-700 mb-3 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-cart-shopping text-orange-600"></i>
-                    <span>Itens no Carrinho</span>
-                </div>
-
-                <button
-                    id="pdv-clear-cart"
-                    class="text-xs text-red-600 hover:text-red-700 underline"
-                >
-                    Esvaziar
-                </button>
-            </div>
-
-            <table class="w-full text-sm">
-                <thead class="text-left text-gray-500 border-b">
-                    <tr>
-                        <th class="px-2 py-1">Produto</th>
-                        <th class="px-2 py-1 text-right">Qtd</th>
-                        <th class="px-2 py-1 text-right">Preço</th>
-                        <th class="px-2 py-1 text-right">Total</th>
-                        <th class="px-2 py-1 text-right">Remover</th>
-                    </tr>
-                </thead>
-                <tbody id="pdv-cart-body"></tbody>
-            </table>
-
-            <div id="pdv-empty-cart" class="text-center text-xs text-gray-400 py-6">
-                Nenhum item no carrinho.
-            </div>
-        </div>
+        <ul 
+          id="productSuggestions"
+          class="absolute top-full left-0 right-0 bg-white border border-gray-300 max-h-52 overflow-y-auto rounded-md shadow-md mt-1 hidden z-50 text-sm"
+        ></ul>
+      </div>
     </div>
 
-    <!-- LADO DIREITO: totais + pagamento -->
-    <div class="w-full lg:w-80 flex-shrink-0 space-y-4">
-
-        <!-- Totais -->
-        <div class="bg-white rounded-xl shadow p-4 text-sm">
-            <div class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <i class="fa-solid fa-money-bill-wave text-green-600"></i>
-                <span>Resumo da Venda</span>
-            </div>
-
-            <div class="flex justify-between text-xs text-gray-500 mb-1">
-                <span>Subtotal</span>
-                <span id="pdv-subtotal">R$ 0,00</span>
-            </div>
-
-            <div class="flex justify-between text-xs text-gray-500 mb-1">
-                <span>Desconto</span>
-                <span id="pdv-discount">R$ 0,00</span>
-            </div>
-
-            <div class="flex justify-between text-base font-bold text-gray-800 border-t pt-2 mt-2">
-                <span>Total</span>
-                <span id="pdv-total">R$ 0,00</span>
-            </div>
-        </div>
-
-        <!-- Pagamento -->
-        <div class="bg-white rounded-xl shadow p-4 text-sm">
-            <div class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <i class="fa-solid fa-credit-card text-indigo-600"></i>
-                <span>Pagamento</span>
-            </div>
-
-            <div class="mb-3">
-                <label class="block text-xs text-gray-600 mb-1">Forma de Pagamento</label>
-                <select id="pdv-payment-method" class="w-full border rounded-lg px-2 py-2 text-sm">
-                    <option value="DINHEIRO">Dinheiro</option>
-                    <option value="PIX">PIX</option>
-                    <option value="DEBITO">Cartão Débito</option>
-                    <option value="CREDITO">Cartão Crédito</option>
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label class="block text-xs text-gray-600 mb-1">Valor Recebido (se dinheiro)</label>
-                <input
-                    id="pdv-cash-received"
-                    class="w-full border rounded-lg px-2 py-2 text-sm"
-                    placeholder="Ex: 100.00"
-                />
-                <div class="text-[11px] text-gray-500 mt-1">
-                    Troco calculado automaticamente
-                </div>
-            </div>
-
-            <div class="flex justify-between text-xs text-gray-500 mb-1">
-                <span>Troco</span>
-                <span id="pdv-change">R$ 0,00</span>
-            </div>
-
-            <button
-                id="pdv-finish-sale"
-                class="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"
-            >
-                Finalizar Venda
-            </button>
-
-            <div id="pdv-feedback" class="text-center text-[11px] font-medium text-gray-600 mt-3 min-h-[1rem]"></div>
-        </div>
-
+    <!-- TABELA DO CARRINHO -->
+    <div class="overflow-x-auto border border-gray-200 rounded-lg">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-100 text-gray-700">
+          <tr>
+            <th class="text-left px-3 py-2 font-medium">Produto</th>
+            <th class="text-center px-3 py-2 font-medium w-20">Qtde</th>
+            <th class="text-right px-3 py-2 font-medium w-24">Unitário</th>
+            <th class="text-right px-3 py-2 font-medium w-24">Desc (R$)</th>
+            <th class="text-right px-3 py-2 font-medium w-28">Total Líquido</th>
+            <th class="text-center px-3 py-2 font-medium w-10"></th>
+          </tr>
+        </thead>
+        <tbody id="cartBody" class="divide-y divide-gray-200 bg-white">
+          <!-- linhas geradas via JS -->
+        </tbody>
+      </table>
     </div>
+
+  </div>
+
+  <!-- LADO DIREITO: totais e ações -->
+  <div class="w-full md:w-80 flex flex-col gap-4">
+
+    <!-- RESUMO FINANCEIRO -->
+    <div class="border border-gray-200 rounded-lg p-4 bg-white text-sm space-y-3">
+
+      <div class="flex justify-between">
+        <span class="text-gray-600 font-medium">Subtotal:</span>
+        <span id="subtotalValue" class="font-semibold text-gray-900">R$ 0,00</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <label for="descontoGeral" class="text-gray-600 font-medium text-sm whitespace-nowrap">
+          Desconto Geral (R$):
+        </label>
+
+        <input 
+          id="descontoGeral"
+          type="number"
+          step="0.01"
+          value="0.00"
+          disabled
+          class="w-24 border border-gray-300 rounded-md px-2 py-1 text-right text-sm disabled:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+
+        <button 
+          id="unlockDiscountBtn"
+          class="bg-gray-700 text-white text-xs px-2 py-1 rounded hover:bg-gray-800 focus:outline-none"
+        >
+          🔒
+        </button>
+      </div>
+
+      <div class="flex justify-between text-base font-semibold text-gray-900 border-t border-gray-200 pt-3">
+        <span>Total Final:</span>
+        <span id="totalFinalValue">R$ 0,00</span>
+      </div>
+    </div>
+
+    <!-- AÇÕES -->
+    <div class="flex flex-col gap-2">
+      <button 
+        id="finalizarVendaBtn"
+        class="w-full bg-blue-600 text-white text-base font-semibold py-3 rounded-md hover:bg-blue-700 focus:outline-none"
+      >
+        Finalizar Venda
+      </button>
+
+      <button 
+        id="cancelarCarrinhoBtn"
+        class="w-full bg-gray-400 text-white text-sm font-medium py-2 rounded-md hover:bg-gray-500 focus:outline-none"
+      >
+        Cancelar / Limpar
+      </button>
+    </div>
+
+  </div>
 </div>
 
-<!-- Histórico -->
-<div class="bg-white rounded-xl shadow p-4 mt-6 text-sm">
-    <div class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-        <i class="fa-solid fa-clock-rotate-left text-purple-600"></i>
-        <span>Últimas Vendas</span>
+
+<!-- MODAL PAGAMENTO -->
+<div 
+  id="paymentModal"
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50"
+>
+  <div class="bg-white rounded-lg p-6 w-80 shadow-xl space-y-4 text-sm">
+
+    <h2 class="text-lg font-semibold text-center text-gray-900">Pagamento</h2>
+
+    <div class="text-center text-gray-800">
+      Total a pagar: 
+      <strong id="pgTotalFinal" class="text-xl font-bold">R$ 0,00</strong>
     </div>
 
-    <table class="w-full text-sm">
-        <thead class="text-left text-gray-500 border-b">
-            <tr>
-                <th class="px-2 py-1">#</th>
-                <th class="px-2 py-1">Total</th>
-                <th class="px-2 py-1">Pagamento</th>
-                <th class="px-2 py-1">Data</th>
-            </tr>
-        </thead>
-        <tbody id="pdv-history-body"></tbody>
-    </table>
-
-    <div id="pdv-history-empty" class="text-center text-xs text-gray-400 py-6">
-        Nenhuma venda recente.
+    <!-- MÉTODO 1 -->
+    <div class="grid grid-cols-3 gap-2 items-center">
+      <label class="col-span-1 text-gray-700 font-medium">Método 1:</label>
+      <select 
+        id="pgMetodo1" 
+        class="col-span-2 border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        <option value="dinheiro">Dinheiro</option>
+        <option value="cartao_credito">Cartão Crédito</option>
+        <option value="cartao_debito">Cartão Débito</option>
+        <option value="pix">PIX</option>
+      </select>
     </div>
+
+    <div class="grid grid-cols-3 gap-2 items-center">
+      <label class="text-gray-700 font-medium">Valor 1:</label>
+      <input 
+        type="number" 
+        id="pgValor1" 
+        step="0.01"
+        min="0"
+        value="0.00"
+        class="col-span-2 border border-gray-300 rounded-md p-2 text-right text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+    </div>
+
+    <!-- MÉTODO 2 -->
+    <div class="grid grid-cols-3 gap-2 items-center">
+      <label class="text-gray-700 font-medium">Método 2:</label>
+      <select 
+        id="pgMetodo2" 
+        class="col-span-2 border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        <option value="">(opcional)</option>
+        <option value="dinheiro">Dinheiro</option>
+        <option value="cartao_credito">Cartão Crédito</option>
+        <option value="cartao_debito">Cartão Débito</option>
+        <option value="pix">PIX</option>
+      </select>
+    </div>
+
+    <div class="grid grid-cols-3 gap-2 items-center">
+      <label class="text-gray-700 font-medium">Valor 2:</label>
+      <input 
+        type="number" 
+        id="pgValor2" 
+        step="0.01"
+        min="0"
+        value="0.00"
+        class="col-span-2 border border-gray-300 rounded-md p-2 text-right text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+    </div>
+
+    <!-- TROCO -->
+    <div class="flex justify-between font-medium text-gray-800">
+      <span>Troco:</span>
+      <span id="pgTroco" class="font-semibold">R$ 0,00</span>
+    </div>
+
+    <!-- BOTÕES -->
+    <div class="flex justify-between pt-2">
+      <button 
+        id="confirmarPagamentoBtn"
+        class="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-green-700 focus:outline-none"
+      >
+        Confirmar
+      </button>
+
+      <button 
+        id="cancelarPagamentoBtn"
+        class="bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-500 focus:outline-none"
+      >
+        Cancelar
+      </button>
+    </div>
+  </div>
 </div>

@@ -1,372 +1,407 @@
-// public/js/modules/pdv/pdv.js
+// ------------------------------
+// ESTADO DO PDV
+// ------------------------------
+let cartItems = [];          // [{ id, nome, precoUnit, quantidade, descontoItem }]
+let descontoGeral = 0.00;
+let descontosLiberados = false;
 
-// --- estado local do carrinho ---
-let cart = []; 
-// cada item = { product_id, name, unit_price, qty }
+let searchTimeout = null;
 
-// formata em BRL
-function formatBRL(v) {
-    const n = Number(v || 0);
-    return "R$ " + n.toFixed(2).replace('.', ',');
-}
 
-// soma carrinho
-function getTotals() {
-    let subtotal = 0;
-    cart.forEach(item => {
-        subtotal += item.unit_price * item.qty;
-    });
+// ------------------------------
+// ELEMENTOS DO DOM
+// ------------------------------
+const searchInput           = document.getElementById('searchProduct');
+const suggestionsList       = document.getElementById('productSuggestions');
 
-    const discount = 0; // pode evoluir futuramente
-    const total = subtotal - discount;
+const cartBody              = document.getElementById('cartBody');
 
-    return { subtotal, discount, total };
-}
+const subtotalValueEl       = document.getElementById('subtotalValue');
+const totalFinalValueEl     = document.getElementById('totalFinalValue');
 
-// renderiza carrinho na tabela
-function renderCart() {
-    const tbody = document.getElementById('pdv-cart-body');
-    const emptyMsg = document.getElementById('pdv-empty-cart');
+const descontoGeralInput    = document.getElementById('descontoGeral');
+const unlockDiscountBtn     = document.getElementById('unlockDiscountBtn');
 
-    tbody.innerHTML = '';
+const finalizarVendaBtn     = document.getElementById('finalizarVendaBtn');
+const cancelarCarrinhoBtn   = document.getElementById('cancelarCarrinhoBtn');
 
-    if (cart.length === 0) {
-        emptyMsg.classList.remove('hidden');
-    } else {
-        emptyMsg.classList.add('hidden');
+const paymentModal          = document.getElementById('paymentModal');
+const cancelarPagamentoBtn  = document.getElementById('cancelarPagamentoBtn');
+const confirmarPagamentoBtn = document.getElementById('confirmarPagamentoBtn');
+
+const pgTotalFinalEl        = document.getElementById('pgTotalFinal');
+const pgMetodo1El           = document.getElementById('pgMetodo1');
+const pgMetodo2El           = document.getElementById('pgMetodo2');
+const pgValor1El            = document.getElementById('pgValor1');
+const pgValor2El            = document.getElementById('pgValor2');
+const pgTrocoEl             = document.getElementById('pgTroco');
+
+
+// ------------------------------
+// AUTOCOMPLETE DE PRODUTOS
+// ------------------------------
+searchInput.addEventListener('input', () => {
+    const term = searchInput.value.trim();
+    if (term.length < 2) {
+        hideSuggestions();
+        return;
     }
 
-    cart.forEach((item, index) => {
-        const lineTotal = item.unit_price * item.qty;
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        fetch(`/modules/pdv/search-products?query=${encodeURIComponent(term)}`)
+            .then(res => res.json())
+            .then(data => {
+                renderProductSuggestions(data);
+            })
+            .catch(err => {
+                console.error('Erro ao buscar produtos:', err);
+            });
+    }, 300);
+});
 
-        const tr = document.createElement('tr');
-        tr.className = 'border-b';
+function renderProductSuggestions(produtos = []) {
+    if (!produtos.length) {
+        hideSuggestions();
+        return;
+    }
 
-        tr.innerHTML = `
-            <td class="px-2 py-1">${item.name}</td>
+    suggestionsList.innerHTML = '';
 
-            <td class="px-2 py-1 text-right">
-                <input
-                    data-idx="${index}"
-                    class="pdv-qty-input w-16 border rounded px-1 py-0.5 text-right text-sm"
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    value="${item.qty}"
-                />
+    produtos.forEach(prod => {
+        const li = document.createElement('li');
+        li.className = "px-3 py-2 flex items-center justify-between cursor-pointer hover:bg-gray-100 text-sm";
+
+        li.innerHTML = `
+            <span class="text-gray-700">${prod.nome} <span class="text-gray-400 text-xs">(${prod.sku || prod.codigo_barras || ''})</span></span>
+            <strong class="text-gray-900">R$ ${Number(prod.preco).toFixed(2)}</strong>
+        `;
+
+        li.addEventListener('click', () => {
+            addProductToCart(prod);
+            hideSuggestions();
+            searchInput.value = '';
+        });
+
+        suggestionsList.appendChild(li);
+    });
+
+    suggestionsList.classList.remove('hidden');
+}
+
+function hideSuggestions() {
+    suggestionsList.classList.add('hidden');
+    suggestionsList.innerHTML = '';
+}
+
+
+// ------------------------------
+// CARRINHO
+// ------------------------------
+function addProductToCart(prod) {
+    const existing = cartItems.find(i => i.id === prod.id);
+    if (existing) {
+        existing.quantidade += 1;
+    } else {
+        cartItems.push({
+            id: prod.id,
+            nome: prod.nome,
+            precoUnit: Number(prod.preco),
+            quantidade: 1,
+            descontoItem: 0.00
+        });
+    }
+
+    renderCart();
+}
+
+function renderCart() {
+    cartBody.innerHTML = '';
+
+    cartItems.forEach((item, index) => {
+        const totalBruto    = item.precoUnit * item.quantidade;
+        const totalLiquido  = totalBruto - item.descontoItem;
+        const row           = document.createElement('tr');
+
+        row.className = "align-top";
+
+        row.innerHTML = `
+            <td class="px-3 py-2 text-gray-900">
+                <div class="font-medium">${item.nome}</div>
             </td>
 
-            <td class="px-2 py-1 text-right">${formatBRL(item.unit_price)}</td>
-
-            <td class="px-2 py-1 text-right">${formatBRL(lineTotal)}</td>
-
-            <td class="px-2 py-1 text-right">
-                <button
-                    data-rm="${index}"
-                    class="text-red-600 hover:text-red-700 text-xs underline"
+            <td class="px-3 py-2 text-center">
+                <input
+                    type="number"
+                    min="1"
+                    value="${item.quantidade}"
+                    data-index="${index}"
+                    class="cart-qtd-input w-16 border border-gray-300 rounded-md px-2 py-1 text-center text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                    Remover
+            </td>
+
+            <td class="px-3 py-2 text-right text-gray-700">
+                R$ ${item.precoUnit.toFixed(2)}
+            </td>
+
+            <td class="px-3 py-2 text-right">
+                <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value="${item.descontoItem.toFixed(2)}"
+                    data-index="${index}"
+                    class="cart-desc-input w-20 border border-gray-300 rounded-md px-2 py-1 text-right text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${descontosLiberados ? '' : 'bg-gray-100'}"
+                    ${descontosLiberados ? '' : 'disabled'}
+                >
+            </td>
+
+            <td class="px-3 py-2 text-right font-semibold text-gray-900">
+                R$ ${totalLiquido.toFixed(2)}
+            </td>
+
+            <td class="px-3 py-2 text-center">
+                <button
+                    class="remove-item-btn text-red-600 hover:text-red-800 text-base leading-none"
+                    data-index="${index}"
+                    title="Remover item"
+                >
+                    🗑
                 </button>
             </td>
         `;
 
-        tbody.appendChild(tr);
+        cartBody.appendChild(row);
     });
 
-    // bind remover
-    tbody.querySelectorAll('[data-rm]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const idx = parseInt(btn.getAttribute('data-rm'));
-            cart.splice(idx, 1);
+    bindCartEvents();
+    recalcularTotais();
+}
+
+function bindCartEvents() {
+    // quantidade
+    document.querySelectorAll('.cart-qtd-input').forEach(input => {
+        input.addEventListener('change', e => {
+            const idx = e.target.getAttribute('data-index');
+            const novaQtd = Number(e.target.value);
+            if (novaQtd >= 1) {
+                cartItems[idx].quantidade = novaQtd;
+                renderCart();
+            }
+        });
+    });
+
+    // desconto por item
+    document.querySelectorAll('.cart-desc-input').forEach(input => {
+        input.addEventListener('change', e => {
+            const idx = e.target.getAttribute('data-index');
+            const novoDesc = Number(e.target.value);
+            const item = cartItems[idx];
+            const totalBruto = item.precoUnit * item.quantidade;
+            cartItems[idx].descontoItem = Math.min(novoDesc, totalBruto);
             renderCart();
-            renderTotals();
         });
     });
 
-    // bind alterar quantidade
-    tbody.querySelectorAll('.pdv-qty-input').forEach(input => {
-        input.addEventListener('change', () => {
-            const idx = parseInt(input.getAttribute('data-idx'));
-            let val = parseFloat(input.value);
-            if (isNaN(val) || val <= 0) val = 1;
-            cart[idx].qty = val;
+    // remover item
+    document.querySelectorAll('.remove-item-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+            const idx = e.target.getAttribute('data-index');
+            cartItems.splice(idx, 1);
             renderCart();
-            renderTotals();
         });
+    });
+
+    // desconto geral
+    descontoGeralInput.addEventListener('change', e => {
+        const valor = Number(e.target.value);
+        descontoGeral = valor >= 0 ? valor : 0;
+        recalcularTotais();
     });
 }
 
-// renderiza totals + troco
-function renderTotals() {
-    const { subtotal, discount, total } = getTotals();
-
-    document.getElementById('pdv-subtotal').textContent = formatBRL(subtotal);
-    document.getElementById('pdv-discount').textContent = formatBRL(discount);
-    document.getElementById('pdv-total').textContent = formatBRL(total);
-
-    // calcula troco se pagamento for dinheiro
-    const method = document.getElementById('pdv-payment-method').value;
-    const receivedInput = document.getElementById('pdv-cash-received').value;
-    const receivedVal = parseFloat(receivedInput || '0') || 0;
-
-    let change = 0;
-    if (method === 'DINHEIRO') {
-        change = receivedVal - total;
-        if (change < 0) change = 0;
-    }
-
-    document.getElementById('pdv-change').textContent = formatBRL(change);
-}
-
-// adiciona item ao carrinho
-function addItemToCart(product) {
-    // product esperado: { id, name, sale_price }
-    // se já existe no carrinho, soma quantidade
-    const found = cart.find(i => i.product_id === product.id);
-    if (found) {
-        found.qty += 1;
-    } else {
-        cart.push({
-            product_id: product.id,
-            name: product.name,
-            unit_price: Number(product.sale_price || 0),
-            qty: 1
-        });
-    }
-    renderCart();
-    renderTotals();
-}
-
-// busca produtos na API
-async function searchProducts(query) {
-    // precisamos de uma rota que permita busca rápida
-    // sugestão de backend:
-    // GET /api/products/search?q=...
-    const resp = await fetch(`/api/products/search?q=${encodeURIComponent(query)}`);
-    const data = await resp.json();
-    if (!data.success) {
-        throw new Error(data.message || 'Falha na busca');
-    }
-    return data.data; // array de produtos
-}
-
-// renderiza resultados de busca
-function renderSearchResults(products) {
-    const box = document.getElementById('pdv-search-results');
-    box.innerHTML = '';
-
-    if (!products.length) {
-        box.classList.remove('hidden');
-        box.innerHTML = `
-            <div class="p-3 text-xs text-gray-500 text-center">
-                Nenhum produto encontrado.
-            </div>
-        `;
-        return;
-    }
-
-    products.forEach(prod => {
-        const row = document.createElement('button');
-        row.className = 'w-full flex justify-between text-left text-sm p-3 hover:bg-gray-100';
-        row.innerHTML = `
-            <div class="flex-1">
-                <div class="font-medium text-gray-800">${prod.name}</div>
-                <div class="text-[11px] text-gray-500">
-                    SKU: ${prod.sku || '-'} · Estoque: ${prod.stock ?? 0}
-                </div>
-            </div>
-            <div class="text-right font-semibold text-gray-800">
-                ${formatBRL(prod.sale_price || 0)}
-            </div>
-        `;
-
-        row.addEventListener('click', () => {
-            addItemToCart(prod);
-            box.classList.add('hidden');
-        });
-
-        box.appendChild(row);
+function getSubtotalSemGeral() {
+    let subtotal = 0;
+    cartItems.forEach(item => {
+        const bruto      = item.precoUnit * item.quantidade;
+        const liquido    = bruto - item.descontoItem;
+        subtotal        += liquido;
     });
-
-    box.classList.remove('hidden');
+    return subtotal;
 }
 
-// finaliza venda
-async function finishSale() {
-    const feedback = document.getElementById('pdv-feedback');
+function recalcularTotais() {
+    const subtotal = getSubtotalSemGeral();
 
-    if (cart.length === 0) {
-        feedback.textContent = 'Carrinho vazio.';
-        feedback.classList.remove('text-green-600');
-        feedback.classList.add('text-red-600');
-        return;
-    }
+    // aplica desconto geral mas não deixa negativo
+    const totalFinal = Math.max(subtotal - descontoGeral, 0);
 
-    const { total } = getTotals();
-    const payment_method = document.getElementById('pdv-payment-method').value;
-    const cash_received_raw = document.getElementById('pdv-cash-received').value;
-    const cash_received = parseFloat(cash_received_raw || '0') || 0;
+    subtotalValueEl.textContent   = `R$ ${subtotal.toFixed(2)}`;
+    totalFinalValueEl.textContent = `R$ ${totalFinal.toFixed(2)}`;
+}
 
-    // Montar payload pro backend
-    const salePayload = {
-        items: cart.map(item => ({
-            product_id: item.product_id,
-            quantity: item.qty,
-            unit_price: item.unit_price
-        })),
-        payment_method,
-        total,
-        cash_received,
-        // TODO: incluir user logado
-        // você pode importar getCurrentUser() de auth.js se quiser mais tarde
-    };
 
-    // Chama API de finalizar venda
-    // a rota sugerida:
-    // POST /api/sales/pdv
-    const resp = await fetch('/api/sales/pdv', {
+// ------------------------------
+// DESBLOQUEAR DESCONTOS
+// ------------------------------
+unlockDiscountBtn.addEventListener('click', () => {
+    const senha = window.prompt('Digite a senha de administrador para liberar descontos:');
+    if (!senha) return;
+
+    fetch('/modules/pdv/validate-admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(salePayload)
+        body: JSON.stringify({ senha })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data && data.valid === true) {
+            descontosLiberados = true;
+            descontoGeralInput.disabled = false;
+            descontoGeralInput.classList.remove('bg-gray-100');
+            unlockDiscountBtn.textContent = '🔓';
+            renderCart(); // re-render pra liberar inputs de desconto item
+        } else {
+            alert('Senha inválida');
+        }
+    })
+    .catch(err => {
+        console.error('Erro ao validar senha:', err);
+        alert('Erro ao validar senha');
     });
+});
 
-    const data = await resp.json();
-    if (!data.success) {
-        feedback.textContent = data.message || 'Erro ao finalizar venda.';
-        feedback.classList.remove('text-green-600');
-        feedback.classList.add('text-red-600');
+
+// ------------------------------
+// LIMPAR TELA / CANCELAR CARRINHO
+// ------------------------------
+cancelarCarrinhoBtn.addEventListener('click', () => {
+    limparPDV();
+});
+
+function limparPDV() {
+    cartItems = [];
+    descontoGeral = 0.00;
+    descontosLiberados = false;
+
+    descontoGeralInput.value = '0.00';
+    descontoGeralInput.disabled = true;
+    descontoGeralInput.classList.add('bg-gray-100');
+    unlockDiscountBtn.textContent = '🔒';
+
+    pgValor1El.value = "0.00";
+    pgValor2El.value = "0.00";
+    pgMetodo1El.value = "dinheiro";
+    pgMetodo2El.value = "";
+
+    renderCart();
+    fecharModalPagamento();
+}
+
+
+// ------------------------------
+// PAGAMENTO (2 MÉTODOS)
+// ------------------------------
+finalizarVendaBtn.addEventListener('click', () => {
+    // pega total final atual
+    const totalFinalTexto = totalFinalValueEl.textContent.replace('R$','').trim();
+    const totalFinal = Number(totalFinalTexto.replace(',', '.'));
+
+    pgTotalFinalEl.textContent = `R$ ${totalFinal.toFixed(2)}`;
+    abrirModalPagamento();
+    atualizarTroco();
+});
+
+cancelarPagamentoBtn.addEventListener('click', () => {
+    fecharModalPagamento();
+});
+
+[pgValor1El, pgValor2El, pgMetodo1El, pgMetodo2El].forEach(el => {
+    el.addEventListener('input', atualizarTroco);
+    el.addEventListener('change', atualizarTroco);
+});
+
+function abrirModalPagamento() {
+    paymentModal.classList.remove('hidden');
+}
+
+function fecharModalPagamento() {
+    paymentModal.classList.add('hidden');
+}
+
+function atualizarTroco() {
+    const total = parseFloat(
+        pgTotalFinalEl.textContent.replace('R$','').trim()
+    );
+
+    const v1 = Number(pgValor1El.value);
+    const v2 = Number(pgValor2El.value);
+    const pago = v1 + v2;
+
+    let troco = 0;
+    const m1 = pgMetodo1El.value;
+    const m2 = pgMetodo2El.value;
+
+    // troco só se algum meio for dinheiro e pago > total
+    if ((m1 === 'dinheiro' || m2 === 'dinheiro') && pago > total) {
+        troco = pago - total;
+    }
+
+    pgTrocoEl.textContent = `R$ ${troco.toFixed(2)}`;
+}
+
+// confirmar pagamento -> envia venda para backend
+confirmarPagamentoBtn.addEventListener('click', () => {
+    const total = parseFloat(
+        pgTotalFinalEl.textContent.replace('R$','').trim()
+    );
+
+    const metodo1 = pgMetodo1El.value;
+    const metodo2 = pgMetodo2El.value;
+    const valor1  = Number(pgValor1El.value);
+    const valor2  = Number(pgValor2El.value);
+
+    const somaPagamentos = valor1 + valor2;
+
+    // valida cobertura do total
+    if (Number(somaPagamentos.toFixed(2)) < Number(total.toFixed(2))) {
+        alert('Valor pago é menor que o total.');
         return;
     }
 
-    // se sucesso:
-    feedback.textContent = `Venda #${data.data.sale_id} registrada!`;
-    feedback.classList.remove('text-red-600');
-    feedback.classList.add('text-green-600');
+    const payloadVenda = {
+        itens: cartItems,
+        subtotal: getSubtotalSemGeral(),
+        descontoGeral: descontoGeral,
+        totalFinal: total,
+        pagamentos: [
+            { metodo: metodo1, valor: valor1 },
+            ...(metodo2 ? [{ metodo: metodo2, valor: valor2 }] : [])
+        ]
+    };
 
-    // limpa carrinho
-    cart = [];
-    renderCart();
-    renderTotals();
-
-    // atualiza histórico
-    loadRecentSales();
-}
-
-// pega últimas vendas p/ histórico (opcional)
-async function getRecentSales() {
-    // cria no backend:
-    // GET /api/sales/recent -> retorna [{id, total, payment_method, created_at}, ...]
-    const resp = await fetch('/api/sales/recent');
-    const data = await resp.json();
-    if (!data.success) return [];
-    return data.data;
-}
-
-// desenha histórico
-async function loadRecentSales() {
-    const body = document.getElementById('pdv-history-body');
-    const empty = document.getElementById('pdv-history-empty');
-
-    body.innerHTML = '';
-
-    try {
-        const rows = await getRecentSales();
-
-        if (!rows.length) {
-            empty.classList.remove('hidden');
-            return;
+    fetch('/modules/pdv/finalizar-venda', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payloadVenda)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data && data.ok) {
+            alert('Venda concluída com sucesso! ID: ' + data.venda_id);
+            limparPDV();
+        } else {
+            alert('Erro ao concluir venda.');
         }
-        empty.classList.add('hidden');
-
-        rows.forEach(sale => {
-            const tr = document.createElement('tr');
-            tr.className = 'border-b';
-            tr.innerHTML = `
-                <td class="px-2 py-1">${sale.id}</td>
-                <td class="px-2 py-1">${formatBRL(sale.total)}</td>
-                <td class="px-2 py-1">${sale.payment_method}</td>
-                <td class="px-2 py-1 text-xs text-gray-500">
-                    ${new Date(sale.created_at).toLocaleString()}
-                </td>
-            `;
-            body.appendChild(tr);
-        });
-    } catch (err) {
-        console.error(err);
-        empty.classList.remove('hidden');
-    }
-}
-
-// bind de todos os eventos da tela
-function bindEvents() {
-    // busca produto
-    const searchBtn = document.getElementById('pdv-search-btn');
-    const searchInput = document.getElementById('pdv-search');
-
-    searchBtn.addEventListener('click', async () => {
-        const q = searchInput.value.trim();
-        if (!q) return;
-        try {
-            const products = await searchProducts(q);
-            renderSearchResults(products);
-        } catch (err) {
-            console.error(err);
-            renderSearchResults([]);
-        }
+    })
+    .catch(err => {
+        console.error('Erro ao finalizar venda:', err);
+        alert('Erro ao finalizar venda');
     });
+});
 
-    // Enter na busca
-    searchInput.addEventListener('keydown', async (ev) => {
-        if (ev.key === 'Enter') {
-            ev.preventDefault();
-            const q = searchInput.value.trim();
-            if (!q) return;
-            try {
-                const products = await searchProducts(q);
-                renderSearchResults(products);
-            } catch (err) {
-                console.error(err);
-                renderSearchResults([]);
-            }
-        }
-    });
 
-    // limpar carrinho
-    const clearBtn = document.getElementById('pdv-clear-cart');
-    clearBtn.addEventListener('click', () => {
-        if (cart.length === 0) return;
-        if (confirm('Esvaziar carrinho?')) {
-            cart = [];
-            renderCart();
-            renderTotals();
-        }
-    });
-
-    // alterar forma de pagamento recalcula troco
-    const methodSel = document.getElementById('pdv-payment-method');
-    methodSel.addEventListener('change', () => {
-        renderTotals();
-    });
-
-    // alterar valor recebido recalcula troco
-    const cashInput = document.getElementById('pdv-cash-received');
-    cashInput.addEventListener('input', () => {
-        renderTotals();
-    });
-
-    // finalizar venda
-    const finishBtn = document.getElementById('pdv-finish-sale');
-    finishBtn.addEventListener('click', async () => {
-        await finishSale();
-    });
-}
-
-async function initPage() {
-    cart = []; // zera carrinho sempre que abrir o PDV
-    renderCart();
-    renderTotals();
-    bindEvents();
-    loadRecentSales();
-}
-
-export { initPage };
+// ------------------------------
+// RENDER INICIAL
+// ------------------------------
+renderCart();
