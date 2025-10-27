@@ -1,18 +1,13 @@
-// public/js/suppliers.js
-
 async function apiGetSuppliers() {
     const resp = await fetch('/api/suppliers');
     const data = await resp.json();
-    if (!data.success) {
-        throw new Error('Falha ao carregar fornecedores');
-    }
+    if (!data.success) throw new Error('Falha ao carregar fornecedores');
     return data.data;
 }
 
 async function apiGetSupplier(id) {
     const resp = await fetch(`/api/suppliers/${id}`);
-    const data = await resp.json();
-    return data;
+    return resp.json();
 }
 
 async function apiCreateSupplier(payload) {
@@ -40,8 +35,6 @@ async function apiDeleteSupplier(id) {
     return resp.json();
 }
 
-
-// Renderizar tabela
 async function renderSuppliersTable() {
     const tbody = document.getElementById('suppliers-tbody');
     const statusEl = document.getElementById('suppliers-status');
@@ -72,15 +65,20 @@ async function renderSuppliersTable() {
             tbody.appendChild(tr);
         });
 
-        // bind Editar
+        // editar
         tbody.querySelectorAll('[data-edit]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const id = btn.getAttribute('data-edit');
-                openEditSupplier(id);
+                const data = await apiGetSupplier(id);
+                if (!data.success) {
+                    alert('Não foi possível carregar o fornecedor.');
+                    return;
+                }
+                openSupplierEdit(data.data);
             });
         });
 
-        // bind Excluir
+        // excluir
         tbody.querySelectorAll('[data-del]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const id = btn.getAttribute('data-del');
@@ -98,45 +96,6 @@ async function renderSuppliersTable() {
     }
 }
 
-// abrir form "novo fornecedor"
-function openCreateSupplier() {
-    fillSupplierForm({
-        id: '',
-        name: '',
-        document: '',
-        email: '',
-        phone: '',
-        address: ''
-    });
-    document.getElementById('supplier-form-title').textContent = 'Novo Fornecedor';
-    document.getElementById('supplier-form').dataset.mode = 'create';
-    document.getElementById('supplier-modal').classList.remove('hidden');
-}
-
-// abrir form "editar fornecedor"
-async function openEditSupplier(id) {
-    const data = await apiGetSupplier(id);
-    if (!data.success) {
-        alert('Não foi possível carregar o fornecedor.');
-        return;
-    }
-
-    const s = data.data;
-    fillSupplierForm({
-        id: s.id,
-        name: s.name,
-        document: s.document,
-        email: s.email,
-        phone: s.phone,
-        address: s.address
-    });
-
-    document.getElementById('supplier-form-title').textContent = 'Editar Fornecedor';
-    document.getElementById('supplier-form').dataset.mode = 'edit';
-    document.getElementById('supplier-modal').classList.remove('hidden');
-}
-
-// preencher campos do modal
 function fillSupplierForm(s) {
     document.getElementById('sup-id').value = s.id ?? '';
     document.getElementById('sup-name').value = s.name ?? '';
@@ -146,11 +105,41 @@ function fillSupplierForm(s) {
     document.getElementById('sup-address').value = s.address ?? '';
 }
 
-function closeSupplierForm() {
-    document.getElementById('supplier-modal').classList.add('hidden');
+function openSupplierCreate() {
+    fillSupplierForm({
+        id: '',
+        name: '',
+        document: '',
+        email: '',
+        phone: '',
+        address: ''
+    });
+
+    document.getElementById('supplier-form-title').textContent = 'Novo Fornecedor';
+    document.getElementById('supplier-form').dataset.mode = 'create';
+
+    const modal = document.getElementById('supplier-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
 }
 
-// submit do form
+function openSupplierEdit(s) {
+    fillSupplierForm(s);
+
+    document.getElementById('supplier-form-title').textContent = 'Editar Fornecedor';
+    document.getElementById('supplier-form').dataset.mode = 'edit';
+
+    const modal = document.getElementById('supplier-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeSupplierModal() {
+    const modal = document.getElementById('supplier-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
 async function submitSupplierForm(ev) {
     ev.preventDefault();
 
@@ -177,32 +166,24 @@ async function submitSupplierForm(ev) {
         return;
     }
 
-    closeSupplierForm();
+    closeSupplierModal();
     renderSuppliersTable();
 }
 
-// inicializador da tela de fornecedores
-function initSuppliersPage() {
-    // botão "novo fornecedor"
+function bindSupplierModal() {
     const newBtn = document.getElementById('btn-new-supplier');
-    if (newBtn) {
-        newBtn.addEventListener('click', openCreateSupplier);
-    }
+    if (newBtn) newBtn.addEventListener('click', openSupplierCreate);
 
-    // botão fechar modal
     const closeBtn = document.getElementById('btn-close-supplier-form');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', closeSupplierForm);
-    }
+    if (closeBtn) closeBtn.addEventListener('click', closeSupplierModal);
 
-    // submit form
     const formEl = document.getElementById('supplier-form');
-    if (formEl) {
-        formEl.addEventListener('submit', submitSupplierForm);
-    }
+    if (formEl) formEl.addEventListener('submit', submitSupplierForm);
+}
 
-    // carrega tabela
+async function initPage() {
+    bindSupplierModal();
     renderSuppliersTable();
 }
 
-export { initSuppliersPage };
+export { initPage };

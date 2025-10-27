@@ -1,0 +1,68 @@
+<div class="text-xl font-semibold flex items-center gap-2 mb-4">
+    <i class="fa-solid fa-warehouse text-purple-600"></i>
+    <span>Estoque / Ajustes</span>
+</div>
+
+<div class="bg-white rounded-xl shadow p-4 mb-6">
+    <div class="text-sm font-semibold text-gray-700 mb-3">
+        Registrar Entrada / Saída Manual
+    </div>
+
+    <form id="inventory-move-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+        <div>
+            <label class="block text-gray-600 text-xs mb-1">ID Produto</label>
+            <input id="inv-product-id" class="w-full border rounded px-2 py-1" placeholder="ex: 12">
+        </div>
+
+        <div>
+            <label class="block text-gray-600 text-xs mb-1">Tipo</label>
+            <select id="inv-type" class="w-full border rounded px-2 py-1">
+                <option value="entrada">Entrada</option>
+                <option value="saida">Saída</option>
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-gray-600 text-xs mb-1">Quantidade</label>
+            <input id="inv-qty" class="w-full border rounded px-2 py-1" placeholder="ex: 5.5">
+        </div>
+
+        <div class="md:col-span-2">
+            <label class="block text-gray-600 text-xs mb-1">Motivo / Observação</label>
+            <input id="inv-reason" class="w-full border rounded px-2 py-1" placeholder="Devolução pedido #123">
+        </div>
+
+        <div>
+            <label class="block text-gray-600 text-xs mb-1">Filial / Local</label>
+            <input id="inv-branch" class="w-full border rounded px-2 py-1" placeholder="Depósito Central">
+        </div>
+
+        <div class="md:col-span-3 flex justify-end">
+            <button id="btn-inv-move" class="bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium px-3 py-2 rounded-lg">
+                Registrar
+            </button>
+        </div>
+    </form>
+
+    <div id="inv-feedback" class="text-xs text-gray-600 mt-2"></div>
+</div>
+
+<div class="bg-white rounded-xl shadow p-4">
+    <div class="text-sm font-semibold text-gray-700 mb-3">
+        Histórico recente de movimentações
+    </div>
+
+    <table class="w-full text-sm">
+        <thead class="text-left text-gray-500 border-b">
+            <tr>
+                <th class="px-2 py-1">Produto</th>
+                <th class="px-2 py-1">Tipo</th>
+                <th class="px-2 py-1 text-right">Qtd</th>
+                <th class="px-2 py-1">Motivo</th>
+                <th class="px-2 py-1">Filial</th>
+                <th class="px-2 py-1 text-xs">Data</th>
+            </tr>
+        </thead>
+        <tbody id="inv-movements-body"></tbody>
+    </table>
+</div>

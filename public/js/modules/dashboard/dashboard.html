@@ -1,0 +1,85 @@
+<div class="text-xl font-semibold mb-4 flex items-center gap-2">
+    <i class="fa-solid fa-chart-line text-green-600"></i>
+    <span>Dashboard</span>
+</div>
+
+<div id="dash-status" class="text-sm text-gray-500 mb-4"></div>
+
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="bg-white rounded-xl shadow p-4">
+        <div class="text-xs text-gray-500">Vendido Hoje</div>
+        <div id="dash-total-today" class="text-2xl font-bold text-gray-800">R$ 0,00</div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow p-4">
+        <div class="text-xs text-gray-500">Vendido no Mês</div>
+        <div id="dash-total-month" class="text-2xl font-bold text-gray-800">R$ 0,00</div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow p-4">
+        <div class="text-xs text-gray-500">Vendas em Aberto</div>
+        <div id="dash-open-sales" class="text-2xl font-bold text-gray-800">0</div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+    <div class="bg-white rounded-xl shadow p-4">
+        <div class="flex items-center justify-between mb-2">
+            <div class="font-semibold text-gray-700 flex items-center gap-2">
+                <i class="fa-solid fa-fire text-red-500"></i>
+                Mais vendidos (30 dias)
+            </div>
+        </div>
+        <table class="w-full text-sm">
+            <thead class="text-left text-gray-500 border-b">
+                <tr>
+                    <th class="px-2 py-1">Produto</th>
+                    <th class="px-2 py-1 text-right">Qtde</th>
+                    <th class="px-2 py-1 text-right">Receita</th>
+                </tr>
+            </thead>
+            <tbody id="dash-top-products"></tbody>
+        </table>
+    </div>
+
+    <div class="bg-white rounded-xl shadow p-4">
+        <div class="flex items-center justify-between mb-2">
+            <div class="font-semibold text-gray-700 flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>
+                Estoque Baixo
+            </div>
+        </div>
+        <table class="w-full text-sm">
+            <thead class="text-left text-gray-500 border-b">
+                <tr>
+                    <th class="px-2 py-1">Produto</th>
+                    <th class="px-2 py-1">SKU</th>
+                    <th class="px-2 py-1 text-right">Estoque</th>
+                    <th class="px-2 py-1 text-right">Preço</th>
+                </tr>
+            </thead>
+            <tbody id="dash-low-stock"></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl shadow p-4 mt-8">
+    <div class="font-semibold text-gray-700 flex items-center gap-2 mb-2">
+        <i class="fa-solid fa-clock-rotate-left text-purple-500"></i>
+        Movimentações Recentes de Estoque
+    </div>
+
+    <table class="w-full text-sm">
+        <thead class="text-left text-gray-500 border-b">
+            <tr>
+                <th class="px-2 py-1">Produto</th>
+                <th class="px-2 py-1">Tipo</th>
+                <th class="px-2 py-1 text-right">Qtd</th>
+                <th class="px-2 py-1">Motivo</th>
+                <th class="px-2 py-1">Responsável</th>
+                <th class="px-2 py-1">Data</th>
+            </tr>
+        </thead>
+        <tbody id="dash-movements"></tbody>
+    </table>
+</div>

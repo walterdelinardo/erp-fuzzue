@@ -1,5 +1,3 @@
-// public/js/dashboard.js
-
 async function apiGetDashboard() {
     const resp = await fetch('/api/dashboard');
     const data = await resp.json();
@@ -10,20 +8,17 @@ async function apiGetDashboard() {
 }
 
 function renderTotals(totals) {
-    const todayEl = document.getElementById('dash-total-today');
-    const monthEl = document.getElementById('dash-total-month');
-    const openEl  = document.getElementById('dash-open-sales');
-
-    if (todayEl) todayEl.textContent = `R$ ${totals.total_sales_today.toFixed(2)}`;
-    if (monthEl) monthEl.textContent = `R$ ${totals.total_sales_month.toFixed(2)}`;
-    if (openEl)  openEl.textContent  = `${totals.open_sales_count}`;
+    document.getElementById('dash-total-today').textContent =
+        `R$ ${totals.total_sales_today.toFixed(2)}`;
+    document.getElementById('dash-total-month').textContent =
+        `R$ ${totals.total_sales_month.toFixed(2)}`;
+    document.getElementById('dash-open-sales').textContent =
+        `${totals.open_sales_count}`;
 }
 
 function renderTopProducts(rows) {
     const tbody = document.getElementById('dash-top-products');
-    if (!tbody) return;
     tbody.innerHTML = '';
-
     rows.forEach(p => {
         const tr = document.createElement('tr');
         tr.className = 'border-b';
@@ -38,9 +33,7 @@ function renderTopProducts(rows) {
 
 function renderLowStock(rows) {
     const tbody = document.getElementById('dash-low-stock');
-    if (!tbody) return;
     tbody.innerHTML = '';
-
     rows.forEach(item => {
         const tr = document.createElement('tr');
         tr.className = 'border-b';
@@ -56,9 +49,7 @@ function renderLowStock(rows) {
 
 function renderRecentMovements(rows) {
     const tbody = document.getElementById('dash-movements');
-    if (!tbody) return;
     tbody.innerHTML = '';
-
     rows.forEach(mov => {
         const tr = document.createElement('tr');
         tr.className = 'border-b';
@@ -68,29 +59,30 @@ function renderRecentMovements(rows) {
             <td class="px-2 py-1 text-right">${mov.quantity}</td>
             <td class="px-2 py-1">${mov.reason || ''}</td>
             <td class="px-2 py-1">${mov.created_by_name || ''}</td>
-            <td class="px-2 py-1 text-xs text-gray-500">${new Date(mov.created_at).toLocaleString()}</td>
+            <td class="px-2 py-1 text-xs text-gray-500">
+                ${new Date(mov.created_at).toLocaleString()}
+            </td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-async function initDashboardPage() {
+async function initPage() {
     const statusEl = document.getElementById('dash-status');
-    if (statusEl) statusEl.textContent = 'Carregando...';
+    statusEl.textContent = 'Carregando dashboard...';
 
     try {
         const data = await apiGetDashboard();
-
         renderTotals(data.totals);
         renderTopProducts(data.top_products);
         renderLowStock(data.low_stock);
         renderRecentMovements(data.recent_movements);
 
-        if (statusEl) statusEl.textContent = '';
+        statusEl.textContent = '';
     } catch (err) {
         console.error(err);
-        if (statusEl) statusEl.textContent = 'Erro ao carregar dashboard.';
+        statusEl.textContent = 'Erro ao carregar dashboard.';
     }
 }
 
-export { initDashboardPage };
+export { initPage };

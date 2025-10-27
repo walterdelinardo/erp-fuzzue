@@ -1,12 +1,15 @@
-// public/js/products.js
-
 async function apiGetProducts() {
     const resp = await fetch('/api/products');
     const data = await resp.json();
     if (!data.success) {
         throw new Error('Falha ao carregar produtos');
     }
-    return data.data; // array
+    return data.data;
+}
+
+async function apiGetProduct(id) {
+    const resp = await fetch(`/api/products/${id}`);
+    return resp.json();
 }
 
 async function apiCreateProduct(prod) {
@@ -15,8 +18,7 @@ async function apiCreateProduct(prod) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(prod),
     });
-    const data = await resp.json();
-    return data;
+    return resp.json();
 }
 
 async function apiUpdateProduct(id, prod) {
@@ -25,19 +27,17 @@ async function apiUpdateProduct(id, prod) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(prod),
     });
-    const data = await resp.json();
-    return data;
+    return resp.json();
 }
 
 async function apiDeleteProduct(id) {
     const resp = await fetch(`/api/products/${id}`, {
         method: 'DELETE'
     });
-    const data = await resp.json();
-    return data;
+    return resp.json();
 }
 
-// monta tabela na tela
+// Preenche tabela
 async function renderProductsTable() {
     const tbody = document.getElementById('products-tbody');
     const statusEl = document.getElementById('products-status');
@@ -58,8 +58,8 @@ async function renderProductsTable() {
                 <td class="px-2 py-1">${prod.name || ''}</td>
                 <td class="px-2 py-1">${prod.sku || ''}</td>
                 <td class="px-2 py-1">${prod.ncm || ''}</td>
-                <td class="px-2 py-1">${prod.stock ?? 0}</td>
-                <td class="px-2 py-1">${prod.sale_price ?? 0}</td>
+                <td class="px-2 py-1 text-right">${prod.stock ?? 0}</td>
+                <td class="px-2 py-1 text-right">${prod.sale_price ?? 0}</td>
                 <td class="px-2 py-1">${prod.supplier_name || '-'}</td>
                 <td class="px-2 py-1 text-right">
                     <button class="text-blue-600 underline mr-2" data-edit="${prod.id}">Editar</button>
@@ -70,14 +70,12 @@ async function renderProductsTable() {
             tbody.appendChild(tr);
         });
 
-        // ligar botões de edição e exclusão
+        // Botão editar
         tbody.querySelectorAll('[data-edit]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.getAttribute('data-edit');
-                openEditForm(id);
-            });
+            btn.addEventListener('click', () => openEditForm(btn.getAttribute('data-edit')));
         });
 
+        // Botão excluir
         tbody.querySelectorAll('[data-del]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const id = btn.getAttribute('data-del');
@@ -95,7 +93,21 @@ async function renderProductsTable() {
     }
 }
 
-// abre modal/formulário pra criar produto
+// Helpers do modal
+function fillFormFields(p) {
+    document.getElementById('prod-id').value = p.id ?? '';
+    document.getElementById('prod-name').value = p.name ?? '';
+    document.getElementById('prod-sku').value = p.sku ?? '';
+    document.getElementById('prod-ncm').value = p.ncm ?? '';
+    document.getElementById('prod-unit').value = p.unit ?? 'un';
+    document.getElementById('prod-category').value = p.category ?? '';
+    document.getElementById('prod-description').value = p.description ?? '';
+    document.getElementById('prod-cost').value = p.cost_price ?? 0;
+    document.getElementById('prod-price').value = p.sale_price ?? 0;
+    document.getElementById('prod-stock').value = p.stock ?? 0;
+    document.getElementById('prod-supplier').value = p.supplier_id ?? '';
+}
+
 function openCreateForm() {
     fillFormFields({
         id: '',
@@ -113,13 +125,11 @@ function openCreateForm() {
     document.getElementById('product-form-title').textContent = 'Novo Produto';
     document.getElementById('product-form').dataset.mode = 'create';
     document.getElementById('product-modal').classList.remove('hidden');
+    document.getElementById('product-modal').classList.add('flex');
 }
 
-// abre modal/formulário pra editar produto existente
 async function openEditForm(id) {
-    // pega dados atuais via GET /api/products/:id
-    const resp = await fetch(`/api/products/${id}`);
-    const data = await resp.json();
+    const data = await apiGetProduct(id);
     if (!data.success) {
         alert('Não foi possível carregar o produto.');
         return;
@@ -143,33 +153,19 @@ async function openEditForm(id) {
     document.getElementById('product-form-title').textContent = 'Editar Produto';
     document.getElementById('product-form').dataset.mode = 'edit';
     document.getElementById('product-modal').classList.remove('hidden');
+    document.getElementById('product-modal').classList.add('flex');
 }
 
-// preenche o form visualmente
-function fillFormFields(p) {
-    document.getElementById('prod-id').value = p.id ?? '';
-    document.getElementById('prod-name').value = p.name ?? '';
-    document.getElementById('prod-sku').value = p.sku ?? '';
-    document.getElementById('prod-ncm').value = p.ncm ?? '';
-    document.getElementById('prod-unit').value = p.unit ?? 'un';
-    document.getElementById('prod-category').value = p.category ?? '';
-    document.getElementById('prod-description').value = p.description ?? '';
-    document.getElementById('prod-cost').value = p.cost_price ?? 0;
-    document.getElementById('prod-price').value = p.sale_price ?? 0;
-    document.getElementById('prod-stock').value = p.stock ?? 0;
-    document.getElementById('prod-supplier').value = p.supplier_id ?? '';
-}
-
-// fecha modal
 function closeForm() {
     document.getElementById('product-modal').classList.add('hidden');
+    document.getElementById('product-modal').classList.remove('flex');
 }
 
 // submit do form (create/edit)
 async function submitForm(ev) {
     ev.preventDefault();
 
-    const mode = ev.target.dataset.mode; // 'create' ou 'edit'
+    const mode = ev.target.dataset.mode;
     const id = document.getElementById('prod-id').value;
 
     const payload = {
@@ -203,29 +199,20 @@ async function submitForm(ev) {
     renderProductsTable();
 }
 
-// inicialização da página produtos
-function initProductsPage() {
-    // botão "novo produto"
+function bindModalEvents() {
     const newBtn = document.getElementById('btn-new-product');
-    if (newBtn) {
-        newBtn.addEventListener('click', openCreateForm);
-    }
+    if (newBtn) newBtn.addEventListener('click', openCreateForm);
 
-    // botão fechar modal
     const closeBtn = document.getElementById('btn-close-form');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', closeForm);
-    }
+    if (closeBtn) closeBtn.addEventListener('click', closeForm);
 
-    // submit form
     const formEl = document.getElementById('product-form');
-    if (formEl) {
-        formEl.addEventListener('submit', submitForm);
-    }
+    if (formEl) formEl.addEventListener('submit', submitForm);
+}
 
-    // carrega tabela
+async function initPage() {
+    bindModalEvents();
     renderProductsTable();
 }
 
-// exporta init pra chamar quando rota / tela "produtos" abrir
-export { initProductsPage };
+export { initPage };
