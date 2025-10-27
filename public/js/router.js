@@ -1,49 +1,45 @@
 // public/js/router.js
 
-// guarda qual é a rota atual
-let currentView = null;
+import { initializeAuth } from './auth.js';
 
-// mostra uma view e esconde as outras
-function showView(viewId) {
-    const allViews = document.querySelectorAll('.view');
-    allViews.forEach(v => {
-        if (v.id === `view-${viewId}`) {
-            v.classList.remove('hidden');
-        } else {
-            v.classList.add('hidden');
-        }
-    });
+// onde vamos injetar o HTML do módulo
+const appWrapper = document.getElementById('app-wrapper');
+const appContent = document.getElementById('app-content');
 
-    currentView = viewId;
+// carrega o HTML e o JS de um módulo e roda initPage()
+async function loadModule(moduleName) {
+    // 1. busca o HTML
+    const htmlRes = await fetch(`./modules/${moduleName}/${moduleName}.html`);
+    const html = await htmlRes.text();
+    appContent.innerHTML = html;
+
+    // 2. importa o JS
+    const mod = await import(`../modules/${moduleName}/${moduleName}.js`);
+
+    // 3. se existir initPage, chama
+    if (mod && typeof mod.initPage === 'function') {
+        mod.initPage();
+    }
 }
 
-// configura os botões do menu lateral
-function bindSidebar(onNavigate) {
-    const buttons = document.querySelectorAll('aside [data-route]');
-    buttons.forEach(btn => {
+// configura os botões da sidebar
+function bindSidebar() {
+    document.querySelectorAll('[data-module]').forEach(btn => {
         btn.addEventListener('click', () => {
-            const route = btn.getAttribute('data-route');
-            onNavigate(route);
+            const mod = btn.getAttribute('data-module');
+            loadModule(mod);
         });
     });
 }
 
-// setupRouter recebe um dicionário com { rota: funçãoInit }
-function setupRouter(routeInits) {
-    bindSidebar(async (route) => {
-        showView(route);
+// fluxo inicial
+(async () => {
+    // Primeiro garante login e mostra o app
+    await initializeAuth(); // isso deve exibir #app-wrapper se o usuário estiver logado
 
-        // se existir init pra essa rota, chama
-        if (routeInits[route]) {
-            routeInits[route]();
-        }
-    });
+    // Liga cliques da sidebar
+    bindSidebar();
 
-    // rota inicial padrão
-    showView('dashboard');
-    if (routeInits['dashboard']) {
-        routeInits['dashboard']();
-    }
-}
-
-export { setupRouter };
+    // Carrega dashboard como tela inicial
+    loadModule('dashboard');
+})();
