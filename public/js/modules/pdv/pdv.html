@@ -1,0 +1,162 @@
+<div class="flex flex-col lg:flex-row gap-6">
+
+    <!-- LADO ESQUERDO: busca + carrinho -->
+    <div class="flex-1 space-y-4">
+
+        <!-- Buscar produto -->
+        <div class="bg-white rounded-xl shadow p-4">
+            <div class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-magnifying-glass text-gray-500"></i>
+                <span>Buscar Produto</span>
+            </div>
+
+            <div class="flex gap-2">
+                <input
+                    id="pdv-search"
+                    class="flex-1 border rounded-lg px-3 py-2 text-sm"
+                    placeholder="Digite nome, SKU, código interno..."
+                />
+                <button
+                    id="pdv-search-btn"
+                    class="bg-gray-800 hover:bg-gray-900 text-white text-sm font-medium px-3 py-2 rounded-lg"
+                >
+                    Buscar
+                </button>
+            </div>
+
+            <div id="pdv-search-results" class="text-sm divide-y mt-4 max-h-48 overflow-y-auto border rounded-lg hidden">
+                <!-- Resultados da busca entram aqui -->
+            </div>
+        </div>
+
+        <!-- Carrinho -->
+        <div class="bg-white rounded-xl shadow p-4">
+            <div class="text-sm font-semibold text-gray-700 mb-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-cart-shopping text-orange-600"></i>
+                    <span>Itens no Carrinho</span>
+                </div>
+
+                <button
+                    id="pdv-clear-cart"
+                    class="text-xs text-red-600 hover:text-red-700 underline"
+                >
+                    Esvaziar
+                </button>
+            </div>
+
+            <table class="w-full text-sm">
+                <thead class="text-left text-gray-500 border-b">
+                    <tr>
+                        <th class="px-2 py-1">Produto</th>
+                        <th class="px-2 py-1 text-right">Qtd</th>
+                        <th class="px-2 py-1 text-right">Preço</th>
+                        <th class="px-2 py-1 text-right">Total</th>
+                        <th class="px-2 py-1 text-right">Remover</th>
+                    </tr>
+                </thead>
+                <tbody id="pdv-cart-body"></tbody>
+            </table>
+
+            <div id="pdv-empty-cart" class="text-center text-xs text-gray-400 py-6">
+                Nenhum item no carrinho.
+            </div>
+        </div>
+    </div>
+
+    <!-- LADO DIREITO: totais + pagamento -->
+    <div class="w-full lg:w-80 flex-shrink-0 space-y-4">
+
+        <!-- Totais -->
+        <div class="bg-white rounded-xl shadow p-4 text-sm">
+            <div class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-money-bill-wave text-green-600"></i>
+                <span>Resumo da Venda</span>
+            </div>
+
+            <div class="flex justify-between text-xs text-gray-500 mb-1">
+                <span>Subtotal</span>
+                <span id="pdv-subtotal">R$ 0,00</span>
+            </div>
+
+            <div class="flex justify-between text-xs text-gray-500 mb-1">
+                <span>Desconto</span>
+                <span id="pdv-discount">R$ 0,00</span>
+            </div>
+
+            <div class="flex justify-between text-base font-bold text-gray-800 border-t pt-2 mt-2">
+                <span>Total</span>
+                <span id="pdv-total">R$ 0,00</span>
+            </div>
+        </div>
+
+        <!-- Pagamento -->
+        <div class="bg-white rounded-xl shadow p-4 text-sm">
+            <div class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-credit-card text-indigo-600"></i>
+                <span>Pagamento</span>
+            </div>
+
+            <div class="mb-3">
+                <label class="block text-xs text-gray-600 mb-1">Forma de Pagamento</label>
+                <select id="pdv-payment-method" class="w-full border rounded-lg px-2 py-2 text-sm">
+                    <option value="DINHEIRO">Dinheiro</option>
+                    <option value="PIX">PIX</option>
+                    <option value="DEBITO">Cartão Débito</option>
+                    <option value="CREDITO">Cartão Crédito</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="block text-xs text-gray-600 mb-1">Valor Recebido (se dinheiro)</label>
+                <input
+                    id="pdv-cash-received"
+                    class="w-full border rounded-lg px-2 py-2 text-sm"
+                    placeholder="Ex: 100.00"
+                />
+                <div class="text-[11px] text-gray-500 mt-1">
+                    Troco calculado automaticamente
+                </div>
+            </div>
+
+            <div class="flex justify-between text-xs text-gray-500 mb-1">
+                <span>Troco</span>
+                <span id="pdv-change">R$ 0,00</span>
+            </div>
+
+            <button
+                id="pdv-finish-sale"
+                class="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"
+            >
+                Finalizar Venda
+            </button>
+
+            <div id="pdv-feedback" class="text-center text-[11px] font-medium text-gray-600 mt-3 min-h-[1rem]"></div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Histórico -->
+<div class="bg-white rounded-xl shadow p-4 mt-6 text-sm">
+    <div class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+        <i class="fa-solid fa-clock-rotate-left text-purple-600"></i>
+        <span>Últimas Vendas</span>
+    </div>
+
+    <table class="w-full text-sm">
+        <thead class="text-left text-gray-500 border-b">
+            <tr>
+                <th class="px-2 py-1">#</th>
+                <th class="px-2 py-1">Total</th>
+                <th class="px-2 py-1">Pagamento</th>
+                <th class="px-2 py-1">Data</th>
+            </tr>
+        </thead>
+        <tbody id="pdv-history-body"></tbody>
+    </table>
+
+    <div id="pdv-history-empty" class="text-center text-xs text-gray-400 py-6">
+        Nenhuma venda recente.
+    </div>
+</div>
