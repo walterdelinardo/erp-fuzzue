@@ -1,29 +1,37 @@
 /**
  * public/js/main.js
- * * Ponto de entrada principal da aplicação frontend.
- * Responsável por inicializar módulos e configurar listeners globais.
+ * Ponto de entrada principal da aplicação frontend (ERP Fuzzue).
+ * Responsável por:
+ *  - configurar listeners globais da UI (sidebar, logout, etc.)
+ *  - inicializar/authenticar o usuário
+ *  - ativar o roteador de módulos (dashboard, pdv, etc.)
+ *
+ * Este arquivo é carregado diretamente em /public/index.html:
+ * <script type="module" src="/js/main.js"></script>
  */
 
-// Importa funções essenciais de outros módulos
-import { initializeAuth } from './auth.js'; // Apenas inicializa a autenticação
-import { setupUIEventListeners } from './ui.js'; // Configura listeners da UI (menu, sidebar, etc.)
+import { initializeAuth } from './core/auth.js';           // controla login/logout e exibe/esconde #app-wrapper
+import { setupUIEventListeners } from './core/ui.js';      // listeners globais da interface (sidebar, botões, modais)
+import { initRouter } from './core/router.js';             // carregamento dinâmico de módulos em #app-content
 
-// --- Ponto de Entrada da Aplicação ---
 window.onload = async () => {
-    console.log("DOM carregado. Iniciando aplicação...");
+    console.log("DOM carregado. Iniciando aplicação Fuzzue...");
 
-    // 1. Configura listeners básicos da UI (menu, sidebar, logout)
-    //    NOTA: O listener do botão de login foi movido para initializeAuth em auth.js
+    // 1. Configura listeners de UI que sempre existem (ex: sidebar, logout, modais globais)
     setupUIEventListeners();
 
-    // 2. Tenta inicializar a autenticação (Firebase ou Mock)
-    //    Esta função agora também adiciona o listener do botão de login
-    //    e decide qual ecrã mostrar inicialmente.
+    // 2. Inicializa autenticação:
+    //    - valida se o usuário está logado
+    //    - se estiver, remove 'hidden' de #app-wrapper
+    //    - popula dados do usuário em #welcome-user
+    //    - se não estiver, redireciona / mostra tela de login (dependendo da sua lógica em auth.js)
     await initializeAuth();
+
+    // 3. Ativa roteador:
+    //    - conecta os botões data-module="..."
+    //    - injeta o HTML inicial (ex.: dashboard ou pdv)
+    //    - garante que ao clicar em "PDV" ele carregue /public/js/modules/pdv/pdv.html
+    initRouter();
 
     console.log("Inicialização do main.js concluída.");
 };
-
-// NOTA: A função startApp agora existe apenas em auth.js e é chamada internamente por handleLogin.
-// Não precisamos mais exportá-la daqui.
-

@@ -49,13 +49,19 @@ searchInput.addEventListener('input', () => {
 
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
-        fetch(`/api/modules/pdv/search-products?query=${encodeURIComponent(term)}`)
+        fetch(`/api/pdv/search-products?query=${encodeURIComponent(term)}`)
             .then(res => res.json())
-            .then(data => {
-                renderProductSuggestions(data);
+            .then(resp => {
+                if (!resp.success) {
+                    console.error('Falha no autocomplete:', resp.error || resp.message);
+                    hideSuggestions();
+                    return;
+                }
+                renderProductSuggestions(resp.data); // resp.data é o array mapeado no backend
             })
             .catch(err => {
                 console.error('Erro ao buscar produtos:', err);
+                hideSuggestions();
             });
     }, 300);
 });
@@ -248,14 +254,14 @@ unlockDiscountBtn.addEventListener('click', () => {
     const senha = window.prompt('Digite a senha de administrador para liberar descontos:');
     if (!senha) return;
 
-    fetch('/api/modules/pdv/validate-admin', {
+    fetch('/api/pdv/validate-admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ senha })
     })
     .then(res => res.json())
-    .then(data => {
-        if (data && data.valid === true) {
+    .then(resp => {
+        if (resp.success && resp.data && resp.data.valid === true) {
             descontosLiberados = true;
             descontoGeralInput.disabled = false;
             descontoGeralInput.classList.remove('bg-gray-100');
@@ -380,18 +386,19 @@ confirmarPagamentoBtn.addEventListener('click', () => {
         ]
     };
 
-    fetch('/api/modules/pdv/finalizar-venda', {
+    fetch('/api/pdv/finalizar-venda', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payloadVenda)
     })
     .then(res => res.json())
-    .then(data => {
-        if (data && data.ok) {
-            alert('Venda concluída com sucesso! ID: ' + data.venda_id);
+    .then(resp => {
+        if (resp.success) {
+            const saleId = resp.data && resp.data.sale_id;
+            alert('Venda concluída com sucesso! ID: ' + saleId);
             limparPDV();
         } else {
-            alert('Erro ao concluir venda.');
+            alert('Erro ao concluir venda: ' + (resp.error || resp.message));
         }
     })
     .catch(err => {

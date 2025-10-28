@@ -1,7 +1,8 @@
 /**
- * api/db.js
+ * server/config/db.js
  * Conexão centralizada com PostgreSQL + helpers de query e transação.
  */
+
 require('dotenv').config();
 const { Pool } = require('pg');
 
@@ -31,7 +32,9 @@ async function query(text, params) {
 }
 
 /**
- * Pega um client dedicado para transações MANUAIS:
+ * Retorna um client dedicado para transações manuais.
+ * Uso típico:
+ *
  *  const client = await db.getClient();
  *  try {
  *    await client.query('BEGIN');
@@ -53,19 +56,23 @@ async function getClient() {
 }
 
 /**
- * Função utilitária para resposta de erro em rotas HTTP.
+ * Resposta de erro padronizada no formato ERP Fuzzue.
+ * Garante consistência entre todos os módulos da API.
  */
-function handleError(res, error, message) {
+function handleError(res, error, message = "Erro interno") {
     console.error(message, error);
+
     res.status(500).json({
         success: false,
-        message: `${message}: ${error.message}`
+        message: message,
+        data: null,
+        error: error?.message || String(error)
     });
 }
 
 module.exports = {
-    pool,         // caso alguém precise do pool cru
-    query,        // para SELECT/UPDATE simples fora de transação
-    getClient,    // para transações complexas (PDV)
-    handleError
+    pool,         // acesso bruto ao pool
+    query,        // operações simples (SELECT, INSERT, UPDATE, DELETE)
+    getClient,    // transações complexas
+    handleError   // resposta de erro padronizada da API
 };

@@ -2,28 +2,31 @@
  * server/modules/pdv.js
  * Rotas do módulo PDV:
  * - Autocomplete de produtos
- * - Liberação de desconto via senha master
+ * - Validação de permissão para desconto
  * - Finalização de venda (sales, sale_items, sales_payments, baixa de estoque)
  */
 
 const express = require('express');
 const router = express.Router();
 
-// Importa nosso db centralizado
-const db = require('../config/db'); // <- caminho relativo ao server/modules
+// Importa conexão/queries utilitárias do banco
+const db = require('../config/db'); // caminho relativo a /server/modules
 
 // -----------------------------------------------------------------------------
-// GET /modules/pdv/search-products?query=xxx
-// Autocomplete de produtos no PDV
-//
-// Retorna até 10 produtos buscando por name e sku.
-// Mapeia os campos para o formato que o front espera.
+// GET /api/pdv/search-products?query=xxx
+// Busca produtos para autocomplete no PDV (nome ou sku).
+// Retorna até 10 itens.
 // -----------------------------------------------------------------------------
 router.get('/search-products', async (req, res) => {
     const { query } = req.query;
 
     if (!query || query.length < 2) {
-        return res.json([]);
+        return res.json({
+            success: true,
+            message: "Nenhum termo válido informado ou termo curto demais",
+            data: [],
+            error: null
+        });
     }
 
     try {
@@ -53,37 +56,50 @@ router.get('/search-products', async (req, res) => {
             estoque_atual: r.stock
         }));
 
-        res.json(mapped);
-    } catch (err) {
-        console.error('Erro ao buscar produtos:', err);
-        return res.status(500).json({
-            error: 'Erro interno ao buscar produtos'
+        return res.json({
+            success: true,
+            message: "Produtos encontrados",
+            data: mapped,
+            error: null
         });
+    } catch (err) {
+        return db.handleError(res, err, "Erro ao buscar produtos");
     }
 });
 
 
 // -----------------------------------------------------------------------------
-// POST /modules/pdv/validate-admin
+// POST /api/pdv/validate-admin
 // body: { senha: "abc" }
-//
-// Valida se a senha digitada pode liberar campos de desconto.
+// Verifica se a senha master permite liberar desconto manual no PDV.
 // -----------------------------------------------------------------------------
 router.post('/validate-admin', (req, res) => {
     const { senha } = req.body;
+
     if (!senha) {
-        return res.json({ valid: false });
+        return res.json({
+            success: true,
+            message: "Senha ausente",
+            data: { valid: false },
+            error: null
+        });
     }
 
     const isValid = senha === process.env.PDV_ADMIN_PASS;
-    return res.json({ valid: isValid === true });
+
+    return res.json({
+        success: true,
+        message: "Validação de permissão de desconto realizada",
+        data: { valid: isValid === true },
+        error: null
+    });
 });
 
 
 // -----------------------------------------------------------------------------
-// POST /modules/pdv/finalizar-venda
+// POST /api/pdv/finalizar-venda
 //
-// body esperado do front:
+// body esperado:
 // {
 //   "itens":[
 //     {
@@ -94,8 +110,8 @@ router.post('/validate-admin', (req, res) => {
 //       "descontoItem": 1.00      // discount_item
 //     }
 //   ],
-//   "subtotal": 18.00,            // soma dos itens líquida (sem desconto geral)
-//   "descontoGeral": 2.00,        // discount_total na venda
+//   "subtotal": 18.00,            // total (antes do desconto geral)
+//   "descontoGeral": 2.00,        // discount_total
 //   "totalFinal": 16.00,          // final_total
 //   "pagamentos":[
 //     {"metodo":"dinheiro","valor":10.00},
@@ -103,42 +119,42 @@ router.post('/validate-admin', (req, res) => {
 //   ]
 // }
 //
-// Fluxo:
-// 1. Cria registro em sales
-// 2. Cria itens em sale_items
-// 3. Dá baixa no estoque de products
-// 4. Cria pagamentos em sales_payments
+// Fluxo transacional:
+// 1. Inserir em sales
+// 2. Inserir em sale_items
+// 3. Baixar estoque em products
+// 4. Inserir pagamentos em sales_payments
 // -----------------------------------------------------------------------------
 router.post('/finalizar-venda', async (req, res) => {
     const { itens, subtotal, descontoGeral, totalFinal, pagamentos } = req.body;
 
     if (!Array.isArray(itens) || itens.length === 0) {
-        return res.status(400).json({ error: 'Nenhum item informado.' });
+        return res.status(400).json({
+            success: false,
+            message: "Nenhum item informado",
+            data: null,
+            error: "PDV_FINALIZAR_VENDA_SEM_ITENS"
+        });
     }
 
     if (!Array.isArray(pagamentos) || pagamentos.length === 0) {
-        return res.status(400).json({ error: 'Nenhum pagamento informado.' });
+        return res.status(400).json({
+            success: false,
+            message: "Nenhum pagamento informado",
+            data: null,
+            error: "PDV_FINALIZAR_VENDA_SEM_PAGAMENTO"
+        });
     }
 
-    // TODO: quando o login estiver integrado,
-    // pegar o ID do usuário logado (req.user.id, etc.)
+    // TODO: substituir depois por req.user.id quando autenticação estiver integrada
     const usuarioLogadoId = 1;
 
     const client = await db.getClient();
+
     try {
         await client.query('BEGIN');
 
         // 1. Inserir venda em "sales"
-        //
-        // sales:
-        //  - customer_name      (por enquanto null)
-        //  - total              (vamos registrar o "subtotal" vindo do front)
-        //  - discount_total     (desconto geral da venda)
-        //  - final_total        (valor final após desconto geral)
-        //  - status             ('completed')
-        //  - created_at         (NOW())
-        //  - created_by         (usuarioLogadoId)
-        //
         const insertSaleSql = `
             INSERT INTO sales (
                 customer_name,
@@ -160,21 +176,10 @@ router.post('/finalizar-venda', async (req, res) => {
             'completed',          // status
             usuarioLogadoId       // created_by
         ];
-
         const saleResult = await client.query(insertSaleSql, saleValues);
         const saleId = saleResult.rows[0].id;
 
-        // 2. Inserir itens na "sale_items" e dar baixa no estoque "products"
-        //
-        // sale_items:
-        //  - sale_id
-        //  - product_id
-        //  - quantity
-        //  - unit_price
-        //  - total            (bruto = unit_price * quantity)
-        //  - discount_item
-        //  - net_total        (líquido após desconto do item)
-        //
+        // 2. Inserir itens e baixar estoque
         for (const item of itens) {
             const unitPrice        = Number(item.precoUnit);
             const qtd              = Number(item.quantidade);
@@ -203,10 +208,8 @@ router.post('/finalizar-venda', async (req, res) => {
                 descItem,
                 totalLiquidoItem
             ];
-
             await client.query(insertItemSql, itemValues);
 
-            // Atualiza estoque do produto
             const baixaEstoqueSql = `
                 UPDATE products
                 SET stock = stock - $1
@@ -215,13 +218,7 @@ router.post('/finalizar-venda', async (req, res) => {
             await client.query(baixaEstoqueSql, [qtd, item.id]);
         }
 
-        // 3. Inserir pagamentos em "sales_payments"
-        //
-        // sales_payments:
-        //  - sale_id
-        //  - metodo
-        //  - valor
-        //
+        // 3. Inserir pagamentos
         for (const pg of pagamentos) {
             const insertPgSql = `
                 INSERT INTO sales_payments (
@@ -240,11 +237,22 @@ router.post('/finalizar-venda', async (req, res) => {
 
         await client.query('COMMIT');
 
-        return res.json({ ok: true, sale_id: saleId });
+        return res.json({
+            success: true,
+            message: "Venda finalizada com sucesso",
+            data: { sale_id: saleId },
+            error: null
+        });
     } catch (err) {
         await client.query('ROLLBACK');
         console.error('Erro ao finalizar venda:', err);
-        return res.status(500).json({ error: 'Erro ao finalizar venda' });
+
+        return res.status(500).json({
+            success: false,
+            message: "Erro ao finalizar venda",
+            data: null,
+            error: err?.message || String(err)
+        });
     } finally {
         client.release();
     }
