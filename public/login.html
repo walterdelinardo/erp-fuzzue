@@ -1,120 +1,118 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Login | Fuzzue ERP</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login | Fuzzue ERP</title>
 
-    <!-- Tailwind CDN (mesmo aviso de prod, mas serve por enquanto) -->
-    <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Ícones -->
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-        crossorigin="anonymous"
-        referrerpolicy="no-referrer"
-    />
+  <!-- Ícones -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center text-gray-800">
 
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-        <!-- Logo / título -->
-        <div class="flex flex-col items-center text-center mb-6">
-            <div class="w-14 h-14 rounded-xl bg-gray-900 flex items-center justify-center text-2xl font-bold text-white mb-3">
-                <span class="text-orange-500">F</span><span>Z</span>
-            </div>
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+    <!-- LOGO / CABEÇALHO -->
+    <div class="flex flex-col items-center text-center mb-6">
+      <div class="w-14 h-14 rounded-xl bg-gray-900 flex items-center justify-center text-2xl font-bold text-white mb-3">
+        <span class="text-orange-500">F</span><span>Z</span>
+      </div>
 
-            <div class="text-xl font-extrabold text-gray-900 tracking-tight">
-                SISTEMA FUZZUE
-            </div>
-
-            <div class="text-sm text-gray-500 font-medium">
-                Acesso Administrativo
-            </div>
-
-            <div class="text-[13px] text-gray-500 mt-2 leading-snug text-center">
-                Entre com suas credenciais para acessar o painel.
-            </div>
-        </div>
-
-        <!-- Formulário -->
-        <form id="login-form" class="space-y-4 text-sm">
-            <div>
-                <label class="block text-gray-700 text-xs font-semibold mb-1">
-                    Usuário
-                </label>
-                <div class="flex items-center border rounded-lg px-3 py-2 bg-white">
-                    <i class="fa-solid fa-user text-gray-400 mr-2"></i>
-                    <input
-                        id="login-username"
-                        type="text"
-                        class="flex-1 outline-none text-gray-800"
-                        placeholder="admin"
-                        autocomplete="username"
-                        required
-                    />
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-gray-700 text-xs font-semibold mb-1">
-                    Senha
-                </label>
-                <div class="flex items-center border rounded-lg px-3 py-2 bg-white">
-                    <i class="fa-solid fa-lock text-gray-400 mr-2"></i>
-                    <input
-                        id="login-password"
-                        type="password"
-                        class="flex-1 outline-none text-gray-800"
-                        placeholder="••••••••"
-                        autocomplete="current-password"
-                        required
-                    />
-                </div>
-            </div>
-
-            <button
-                id="btn-login"
-                class="w-full bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"
-            >
-                Entrar
-            </button>
-        </form>
-
-        <!-- Mensagens -->
-        <div id="login-feedback" class="text-center text-xs text-red-600 font-medium mt-4 min-h-[1rem]"></div>
-
-        <!-- Credenciais demo -->
-        <div class="text-[11px] text-gray-400 font-mono text-center mt-6 leading-relaxed">
-            Credenciais de demonstração:<br/>
-            Usuário: <b>admin</b><br/>
-            Senha: <b>gbl12024</b>
-        </div>
+      <div class="text-xl font-extrabold text-gray-900 tracking-tight">
+        SISTEMA FUZZUE
+      </div>
+      <div class="text-sm text-gray-500 font-medium">Acesso Administrativo</div>
+      <div class="text-[13px] text-gray-500 mt-2 leading-snug text-center">
+        Entre com suas credenciais para acessar o painel.
+      </div>
     </div>
 
-    <!-- Script do login -->
-    <script type="module">
-        import { attemptLogin } from '/js/auth.js';
+    <!-- FORMULÁRIO DE LOGIN -->
+    <form id="login-form" class="space-y-4 text-sm">
+      <div>
+        <label class="block text-gray-700 text-xs font-semibold mb-1">Usuário</label>
+        <div class="flex items-center border rounded-lg px-3 py-2 bg-white">
+          <i class="fa-solid fa-user text-gray-400 mr-2"></i>
+          <input
+            id="login-username"
+            type="text"
+            class="flex-1 outline-none text-gray-800"
+            placeholder="admin"
+            autocomplete="username"
+            required
+          />
+        </div>
+      </div>
 
-        const form = document.getElementById('login-form');
-        const feedbackEl = document.getElementById('login-feedback');
+      <div>
+        <label class="block text-gray-700 text-xs font-semibold mb-1">Senha</label>
+        <div class="flex items-center border rounded-lg px-3 py-2 bg-white">
+          <i class="fa-solid fa-lock text-gray-400 mr-2"></i>
+          <input
+            id="login-password"
+            type="password"
+            class="flex-1 outline-none text-gray-800"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+          />
+        </div>
+      </div>
 
-        form.addEventListener('submit', async (ev) => {
-            ev.preventDefault();
-            feedbackEl.textContent = 'Autenticando...';
+      <button
+        id="btn-login"
+        type="submit"
+        class="w-full bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"
+      >
+        Entrar
+      </button>
+    </form>
 
-            const username = document.getElementById('login-username').value.trim();
-            const password = document.getElementById('login-password').value.trim();
+    <!-- MENSAGEM DE FEEDBACK -->
+    <div id="login-feedback" class="text-center text-xs text-red-600 font-medium mt-4 min-h-[1rem]"></div>
 
-            try {
-                await attemptLogin(username, password);
-                // se attemptLogin der certo, ela mesma redireciona para /index.html
-            } catch (err) {
-                console.error(err);
-                feedbackEl.textContent = err.message || 'Falha ao autenticar.';
-            }
-        });
-    </script>
+    <!-- CREDENCIAIS DEMO -->
+    <div class="text-[11px] text-gray-400 font-mono text-center mt-6 leading-relaxed">
+      Credenciais de demonstração:<br/>
+      Usuário: <b>admin</b><br/>
+      Senha: <b>gbl12024</b>
+    </div>
+  </div>
+
+  <!-- SCRIPT DE LOGIN -->
+  <script type="module">
+    import { attemptLogin } from './js/core/auth.js';
+
+    const form = document.getElementById('login-form');
+    const feedbackEl = document.getElementById('login-feedback');
+    const loginBtn = document.getElementById('btn-login');
+
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      feedbackEl.textContent = 'Autenticando...';
+      loginBtn.disabled = true;
+      loginBtn.classList.add('opacity-60', 'cursor-not-allowed');
+
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+
+      try {
+        await attemptLogin(username, password);
+        // se o login for bem-sucedido, o attemptLogin redireciona automaticamente
+      } catch (err) {
+        console.error('[Login] Erro:', err);
+        feedbackEl.textContent = err.message || 'Falha ao autenticar.';
+        loginBtn.disabled = false;
+        loginBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+      }
+    });
+  </script>
 </body>
 </html>
