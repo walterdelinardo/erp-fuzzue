@@ -10,7 +10,7 @@ const express = require('express');
 const router = express.Router();
 
 // Importa nosso db centralizado
-const db = require('../../api/db'); // <- caminho relativo ao server/modules
+const db = require('../config/db'); // <- caminho relativo ao server/modules
 
 // -----------------------------------------------------------------------------
 // GET /modules/pdv/search-products?query=xxx

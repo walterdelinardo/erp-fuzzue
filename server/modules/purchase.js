@@ -3,7 +3,7 @@
  * Gestão de Ordens de Compra (OC)
  */
 const express = require('express');
-const { pool, handleError } = require('../db');
+const { pool, handleError } = require('../config/db');
 
 const router = express.Router();
 

@@ -49,7 +49,7 @@ searchInput.addEventListener('input', () => {
 
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
-        fetch(`/modules/pdv/search-products?query=${encodeURIComponent(term)}`)
+        fetch(`/api/modules/pdv/search-products?query=${encodeURIComponent(term)}`)
             .then(res => res.json())
             .then(data => {
                 renderProductSuggestions(data);
@@ -248,7 +248,7 @@ unlockDiscountBtn.addEventListener('click', () => {
     const senha = window.prompt('Digite a senha de administrador para liberar descontos:');
     if (!senha) return;
 
-    fetch('/modules/pdv/validate-admin', {
+    fetch('/api/modules/pdv/validate-admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ senha })
@@ -380,7 +380,7 @@ confirmarPagamentoBtn.addEventListener('click', () => {
         ]
     };
 
-    fetch('/modules/pdv/finalizar-venda', {
+    fetch('/api/modules/pdv/finalizar-venda', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payloadVenda)

@@ -3,7 +3,7 @@
  * Controle de Estoque (movimentações)
  */
 const express = require('express');
-const { pool, handleError } = require('../db');
+const { pool, handleError } = require('../config/db');
 
 const router = express.Router();
 

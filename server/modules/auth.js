@@ -3,7 +3,7 @@
  * * Define as rotas para Autenticação (/api/auth)
  */
 const express = require('express');
-const { pool, handleError } = require('../db'); // Importa o pool e o handler de erro
+const { pool, handleError } = require('../config/db'); // Importa o pool e o handler de erro
 
 const router = express.Router();
 

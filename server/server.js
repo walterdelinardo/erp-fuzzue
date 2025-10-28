@@ -7,9 +7,9 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
-const apiRoutes = require('./api/routes');       // index.js dentro de api/routes
-const authRoutes = require('./api/routes/auth'); // rota de auth que você me mandou
-const pdvRoutes = require('./server/modules/pdv');
+const apiRoutes = require('./modules');       // index.js dentro de api/routes
+const authRoutes = require('./modules/auth'); // rota de auth que você me mandou
+const pdvRoutes = require('./modules/pdv');
 
 const app = express();
 const PORT = process.env.PORT || 40011;
