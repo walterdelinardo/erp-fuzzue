@@ -1,4 +1,8 @@
-// public/js/auth.js
+// public/js/core/auth.js
+// Camada de autenticação e sessão do ERP Fuzzue (frontend).
+// - Gerencia sessão do usuário via sessionStorage
+// - Faz login via /api/auth/login
+// - Controla visibilidade do app-wrapper (interface principal)
 
 const SESSION_KEY = 'fuzzue_user';
 
@@ -23,7 +27,20 @@ function clearCurrentUser() {
     sessionStorage.removeItem(SESSION_KEY);
 }
 
-// Tenta login na API e, se der certo, salva o user e redireciona para o sistema
+/**
+ * Tenta login na API.
+ * Espera que o backend responda no formato padrão ERP:
+ * {
+ *   success: true/false,
+ *   message: "...",
+ *   data: { id, fullName, username, ... } | null,
+ *   error: null | "detalhe"
+ * }
+ *
+ * Se login OK:
+ *  - salva o usuário em sessionStorage
+ *  - redireciona para /index.html
+ */
 async function attemptLogin(username, password) {
     const resp = await fetch('/api/auth/login', {
         method: 'POST',
@@ -31,42 +48,67 @@ async function attemptLogin(username, password) {
         body: JSON.stringify({ username, password })
     });
 
-    const data = await resp.json();
-
-    if (!data.success) {
-        throw new Error(data.message || 'Falha no login');
+    let data;
+    try {
+        data = await resp.json();
+    } catch (e) {
+        throw new Error('Resposta inválida do servidor de autenticação.');
     }
 
-    // salva user na sessão
-    setCurrentUser(data.user);
+    // Falha HTTP explícita (ex.: 401)
+    if (!resp.ok) {
+        throw new Error(
+            data?.message ||
+            data?.error ||
+            'Falha na autenticação.'
+        );
+    }
 
-    // manda pro painel
+    // Falha lógica segundo o contrato da API
+    if (!data.success) {
+        throw new Error(
+            data?.message ||
+            data?.error ||
+            'Credenciais inválidas.'
+        );
+    }
+
+    // OK → salva usuário
+    // No padrão oficial, o usuário vem em data.data
+    const userPayload = data.data || {};
+    setCurrentUser(userPayload);
+
+    // Redireciona para o app principal
     window.location.href = '/index.html';
 }
 
-// Checa se tem usuário logado.
-// - Se NÃO tiver, manda pra /login.html
-// - Se tiver, mostra o app-wrapper (remove hidden)
+/**
+ * Checa se há um usuário logado.
+ *  - Se NÃO houver, redireciona para /login.html
+ *  - Se houver, remove "hidden" do #app-wrapper
+ *
+ * Essa função deve ser chamada no início da aplicação (main.js / router.js)
+ */
 async function initializeAuth() {
     const user = getCurrentUser();
     const appWrapper = document.getElementById('app-wrapper');
 
     if (!user) {
-        // não autenticado -> volta pro login
+        // Não autenticado → manda pro login
         window.location.href = '/login.html';
         return;
     }
 
-    // autenticado -> libera a interface principal
+    // Autenticado → revela interface principal
     if (appWrapper) {
         appWrapper.classList.remove('hidden');
     }
 }
 
-// exporta tudo que o resto do app usa
 export {
     initializeAuth,
     attemptLogin,
     getCurrentUser,
+    setCurrentUser,
     clearCurrentUser,
 };
