@@ -1,244 +1,279 @@
 /**
- * api/routes/products.js
- * Rotas de Produtos
+ * server/modules/products.js
+ *
+ * Rotas de gerenciamento de produtos / estoque básico
+ * Base: /api/products
+ *
+ * Permissões esperadas (seed em roles_permissions):
+ * - produtos.ver
+ * - produtos.criar
+ * - produtos.editar
  */
-const express = require('express');
-const { pool, handleError } = require('../config/db');
 
+const express = require('express');
 const router = express.Router();
+
+const db = require('../config/db');
+const requireAuth = require('../middleware/requireAuth');
+const checkPermission = require('../middleware/checkPermission');
+
+/**
+ * Normaliza um produto vindo do DB para o formato esperado pelo frontend
+ */
+function mapProductRow(row) {
+    return {
+        id: row.id,
+        sku: row.sku,
+        barcode: row.barcode,
+        name: row.name,
+        description: row.description,
+        category: row.category,
+        ncm: row.ncm,
+        unit: row.unit,
+        cost_price: row.cost_price,
+        sale_price: row.sale_price,
+        stock: row.stock,
+        supplier_id: row.supplier_id,
+        ativo: row.ativo,
+        data_criacao: row.data_criacao,
+        data_atualizacao: row.data_atualizacao
+    };
+}
 
 /**
  * GET /api/products
- * Lista todos os produtos
+ * Lista básica de produtos (paginável futuramente)
  */
-router.get('/', async (req, res) => {
-    try {
-        const result = await pool.query(`
-            SELECT 
-                p.id,
-                p.name,
-                p.sku,
-                p.ncm,
-                p.unit,
-                p.category,
-                p.description,
-                p.cost_price,
-                p.sale_price,
-                p.stock,
-                p.created_at,
-                p.supplier_id,
-                s.name AS supplier_name
-            FROM products p
-            LEFT JOIN suppliers s ON s.id = p.supplier_id
-            ORDER BY p.id DESC
-        `);
+router.get(
+    '/',
+    requireAuth,
+    checkPermission('produtos.ver'),
+    async (req, res) => {
+        try {
+            const sql = `
+                SELECT
+                    id, sku, barcode, name, description, category, ncm, unit,
+                    cost_price, sale_price, stock, supplier_id,
+                    data_criacao, data_atualizacao, ativo
+                FROM products
+                WHERE ativo = TRUE
+                ORDER BY name ASC
+                LIMIT 200
+            `;
 
-        res.json({
-            success: true,
-            data: result.rows
-        });
-    } catch (err) {
-        handleError(res, err, "Erro ao listar produtos.");
-    }
-});
+            const result = await db.query(sql);
+            const produtos = result.rows.map(mapProductRow);
 
-/**
- * GET /api/products/:id
- * Retorna um produto específico
- */
-router.get('/:id', async (req, res) => {
-    const { id } = req.params;
+            return res.json({
+                success: true,
+                message: 'Produtos carregados',
+                data: produtos,
+                error: null
+            });
 
-    try {
-        const result = await pool.query(`
-            SELECT 
-                p.id,
-                p.name,
-                p.sku,
-                p.ncm,
-                p.unit,
-                p.category,
-                p.description,
-                p.cost_price,
-                p.sale_price,
-                p.stock,
-                p.created_at,
-                p.supplier_id,
-                s.name AS supplier_name
-            FROM products p
-            LEFT JOIN suppliers s ON s.id = p.supplier_id
-            WHERE p.id = $1
-        `, [id]);
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({
+        } catch (err) {
+            console.error('[Products] Erro listando produtos:', err);
+            return res.status(500).json({
                 success: false,
-                message: "Produto não encontrado."
+                message: 'Erro interno ao listar produtos',
+                data: null,
+                error: err.message
             });
         }
-
-        res.json({
-            success: true,
-            data: result.rows[0]
-        });
-
-    } catch (err) {
-        handleError(res, err, "Erro ao buscar produto.");
     }
-});
+);
 
 /**
  * POST /api/products
  * Cria um novo produto
+ *
+ * body esperado:
+ * {
+ *   "sku": "ABC123",
+ *   "barcode": "7891231231234",
+ *   "name": "Camiseta Preta",
+ *   "description": "algodão 100%",
+ *   "category": "Vestuário",
+ *   "ncm": "6109.10.00",
+ *   "unit": "un",
+ *   "cost_price": 20.00,
+ *   "sale_price": 49.90,
+ *   "stock": 100,
+ *   "supplier_id": 3
+ * }
  */
-router.post('/', async (req, res) => {
-    const {
-        name,
-        sku,
-        ncm,
-        unit,
-        category,
-        description,
-        cost_price,
-        sale_price,
-        stock,
-        supplier_id
-    } = req.body;
+router.post(
+    '/',
+    requireAuth,
+    checkPermission('produtos.criar'),
+    async (req, res) => {
+        const {
+            sku,
+            barcode,
+            name,
+            description,
+            category,
+            ncm,
+            unit,
+            cost_price,
+            sale_price,
+            stock,
+            supplier_id
+        } = req.body;
 
-    if (!name) {
-        return res.status(400).json({
-            success: false,
-            message: "Nome é obrigatório."
-        });
-    }
+        if (!name) {
+            return res.status(400).json({
+                success: false,
+                message: 'Nome do produto é obrigatório.',
+                data: null,
+                error: 'PROD_MISSING_NAME'
+            });
+        }
 
-    try {
-        const result = await pool.query(
-            `INSERT INTO products
-                (name, sku, ncm, unit, category, description, cost_price, sale_price, stock, supplier_id)
-             VALUES
-                ($1,   $2,  $3,  $4,   $5,       $6,          $7,         $8,        $9,    $10)
-             RETURNING *`,
-            [
-                name,
+        try {
+            const insertSql = `
+                INSERT INTO products (
+                    sku, barcode, name, description,
+                    category, ncm, unit,
+                    cost_price, sale_price, stock,
+                    supplier_id, data_criacao, ativo
+                )
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, NOW(), TRUE)
+                RETURNING *
+            `;
+
+            const values = [
                 sku || null,
-                ncm || null,
-                unit || 'un',
-                category || null,
+                barcode || null,
+                name,
                 description || null,
-                cost_price || 0,
-                sale_price || 0,
+                category || null,
+                ncm || null,
+                unit || null,
+                cost_price || null,
+                sale_price || null,
                 stock || 0,
                 supplier_id || null
-            ]
-        );
+            ];
 
-        res.status(201).json({
-            success: true,
-            data: result.rows[0]
-        });
+            const result = await db.query(insertSql, values);
+            const newProd = mapProductRow(result.rows[0]);
 
-    } catch (err) {
-        handleError(res, err, "Erro ao criar produto.");
+            return res.status(201).json({
+                success: true,
+                message: 'Produto criado com sucesso.',
+                data: newProd,
+                error: null
+            });
+
+        } catch (err) {
+            console.error('[Products] Erro criando produto:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Erro interno ao criar produto',
+                data: null,
+                error: err.message
+            });
+        }
     }
-});
+);
 
 /**
  * PUT /api/products/:id
- * Atualiza um produto existente
+ * Atualiza dados de um produto existente
  */
-router.put('/:id', async (req, res) => {
-    const { id } = req.params;
+router.put(
+    '/:id',
+    requireAuth,
+    checkPermission('produtos.editar'),
+    async (req, res) => {
+        const { id } = req.params;
 
-    const {
-        name,
-        sku,
-        ncm,
-        unit,
-        category,
-        description,
-        cost_price,
-        sale_price,
-        stock,
-        supplier_id
-    } = req.body;
+        const {
+            sku,
+            barcode,
+            name,
+            description,
+            category,
+            ncm,
+            unit,
+            cost_price,
+            sale_price,
+            stock,
+            supplier_id,
+            ativo
+        } = req.body;
 
-    try {
-        const result = await pool.query(
-            `UPDATE products
-             SET
-                name = $1,
-                sku = $2,
-                ncm = $3,
-                unit = $4,
-                category = $5,
-                description = $6,
-                cost_price = $7,
-                sale_price = $8,
-                stock = $9,
-                supplier_id = $10
-             WHERE id = $11
-             RETURNING *`,
-            [
-                name,
-                sku,
-                ncm,
-                unit,
-                category,
-                description,
-                cost_price,
-                sale_price,
-                stock,
-                supplier_id,
+        try {
+            const updateSql = `
+                UPDATE products
+                SET
+                    sku = $1,
+                    barcode = $2,
+                    name = $3,
+                    description = $4,
+                    category = $5,
+                    ncm = $6,
+                    unit = $7,
+                    cost_price = $8,
+                    sale_price = $9,
+                    stock = $10,
+                    supplier_id = $11,
+                    ativo = $12,
+                    data_atualizacao = NOW()
+                WHERE id = $13
+                RETURNING *
+            `;
+
+            const values = [
+                sku || null,
+                barcode || null,
+                name || null,
+                description || null,
+                category || null,
+                ncm || null,
+                unit || null,
+                cost_price || null,
+                sale_price || null,
+                stock || 0,
+                supplier_id || null,
+                (ativo !== undefined ? ativo : true),
                 id
-            ]
-        );
+            ];
 
-        if (result.rowCount === 0) {
-            return res.status(404).json({
+            const result = await db.query(updateSql, values);
+
+            if (result.rowCount === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Produto não encontrado.',
+                    data: null,
+                    error: 'PROD_NOT_FOUND'
+                });
+            }
+
+            const updated = mapProductRow(result.rows[0]);
+
+            return res.json({
+                success: true,
+                message: 'Produto atualizado com sucesso.',
+                data: updated,
+                error: null
+            });
+
+        } catch (err) {
+            console.error('[Products] Erro atualizando produto:', err);
+            return res.status(500).json({
                 success: false,
-                message: "Produto não encontrado."
+                message: 'Erro interno ao atualizar produto',
+                data: null,
+                error: err.message
             });
         }
-
-        res.json({
-            success: true,
-            data: result.rows[0]
-        });
-
-    } catch (err) {
-        handleError(res, err, "Erro ao atualizar produto.");
     }
-});
+);
 
-/**
- * DELETE /api/products/:id
- * Remove um produto
- */
-router.delete('/:id', async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        const delRes = await pool.query(
-            'DELETE FROM products WHERE id = $1',
-            [id]
-        );
-
-        if (delRes.rowCount === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "Produto não encontrado."
-            });
-        }
-
-        res.json({
-            success: true,
-            message: "Produto removido com sucesso."
-        });
-
-    } catch (err) {
-        handleError(res, err, "Erro ao excluir produto.");
-    }
-});
+// (Opcional futuro)
+// router.delete('/:id', requireAuth, checkPermission('produtos.editar'), ...)
 
 module.exports = router;

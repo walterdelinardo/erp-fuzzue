@@ -9,9 +9,11 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
-const apiRoutes = require('./modules');        // /server/modules/index.js (rotas gerais da API)
-const authRoutes = require('./modules/auth');  // /server/modules/auth.js (login, logout, sessão)
-const pdvRoutes = require('./modules/pdv');    // /server/modules/pdv.js (módulo PDV)
+const apiRoutes = require('./modules');                 // /server/modules/index.js (rotas gerais da API)
+const authRoutes = require('./modules/auth');           // /server/modules/auth.js (login, logout, sessão)
+const pdvRoutes = require('./modules/pdv');             // /server/modules/pdv.js (módulo PDV)
+const suppliersRoutes = require('./modules/suppliers'); // /server/modules/suppliers.js (módulo Fornecedores)
+const purchaseRoutes  = require('./modules/purchase');  // /server/modules/suppliers.js (módulo ordens de compra)
 
 const app = express();
 const PORT = process.env.PORT || 40011;
@@ -48,3 +50,6 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
     console.log(`🚀 Servidor Fuzzue rodando na porta ${PORT}`);
 });
+
+app.use('/api/suppliers', suppliersRoutes);
+app.use('/api/purchase', purchaseRoutes);

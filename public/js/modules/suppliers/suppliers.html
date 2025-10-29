@@ -1,28 +1,93 @@
-<div class="flex items-start justify-between mb-4">
-    <div class="text-xl font-semibold flex items-center gap-2">
-        <i class="fa-solid fa-truck-field text-blue-600"></i>
-        <span>Fornecedores</span>
+<div class="space-y-6">
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+        <i class="fa-solid fa-truck-field text-blue-500"></i>
+        Fornecedores
+      </h1>
+      <p class="text-sm text-gray-500">
+        Cadastro de parceiros de compra e dados de contato.
+      </p>
     </div>
 
-    <button id="btn-new-supplier" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-2 rounded-lg">
-        + Novo Fornecedor
+    <button
+      id="btn-open-new-supplier"
+      class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-3 py-2 rounded-md flex items-center gap-2 justify-center"
+    >
+      <i class="fa-solid fa-plus"></i>
+      <span>Novo Fornecedor</span>
     </button>
+  </div>
+
+  <div class="overflow-x-auto border border-gray-200 rounded-lg bg-white text-sm">
+    <table class="min-w-full">
+      <thead class="bg-gray-100 text-gray-700 text-xs uppercase tracking-wide">
+        <tr>
+          <th class="px-3 py-2 text-left font-medium">Nome</th>
+          <th class="px-3 py-2 text-left font-medium">Documento</th>
+          <th class="px-3 py-2 text-left font-medium">Telefone</th>
+          <th class="px-3 py-2 text-left font-medium">Email</th>
+          <th class="px-3 py-2 text-center font-medium w-20">Ações</th>
+        </tr>
+      </thead>
+      <tbody id="suppliers-table-body" class="divide-y divide-gray-200">
+        <!-- via JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <div id="suppliers-status" class="text-xs text-gray-500"></div>
 </div>
 
-<div id="suppliers-status" class="text-sm text-gray-500 mb-2"></div>
+<!-- Modal Fornecedor -->
+<div id="supplier-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-lg w-full max-w-lg p-4 text-sm">
+    <div class="flex items-start justify-between mb-3">
+      <div class="font-semibold text-gray-800" id="supplier-form-title">Novo Fornecedor</div>
+      <button id="btn-close-supplier-form" class="text-gray-400 hover:text-gray-600">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
 
-<div class="bg-white rounded-xl shadow overflow-x-auto">
-    <table class="min-w-full text-sm">
-        <thead class="text-left text-gray-500 border-b">
-            <tr>
-                <th class="px-2 py-1">ID</th>
-                <th class="px-2 py-1">Nome</th>
-                <th class="px-2 py-1">CNPJ/CPF</th>
-                <th class="px-2 py-1">Telefone</th>
-                <th class="px-2 py-1">Email</th>
-                <th class="px-2 py-1 text-right">Ações</th>
-            </tr>
-        </thead>
-        <tbody id="suppliers-tbody"></tbody>
-    </table>
+    <form id="supplier-form" class="grid grid-cols-2 gap-4" data-mode="create">
+      <input type="hidden" id="sup-id">
+
+      <div class="col-span-2">
+        <label class="block text-gray-600 text-xs mb-1">Nome</label>
+        <input id="sup-name" class="w-full border rounded px-2 py-1" required>
+      </div>
+
+      <div>
+        <label class="block text-gray-600 text-xs mb-1">CNPJ/CPF</label>
+        <input id="sup-document" class="w-full border rounded px-2 py-1">
+      </div>
+
+      <div>
+        <label class="block text-gray-600 text-xs mb-1">Telefone</label>
+        <input id="sup-phone" class="w-full border rounded px-2 py-1">
+      </div>
+
+      <div>
+        <label class="block text-gray-600 text-xs mb-1">Email</label>
+        <input id="sup-email" type="email" class="w-full border rounded px-2 py-1">
+      </div>
+
+      <div class="col-span-2">
+        <label class="block text-gray-600 text-xs mb-1">Endereço / Obs</label>
+        <input id="sup-address" class="w-full border rounded px-2 py-1">
+      </div>
+
+      <div class="col-span-2">
+        <label class="block text-gray-600 text-xs mb-1">Notas internas</label>
+        <input id="sup-notes" class="w-full border rounded px-2 py-1">
+      </div>
+
+      <div class="col-span-2 flex justify-end mt-2">
+        <button class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-2 rounded-lg">
+          Salvar
+        </button>
+      </div>
+    </form>
+  </div>
 </div>

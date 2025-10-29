@@ -1,142 +1,197 @@
-async function apiGetPurchaseOrders() {
-    const resp = await fetch('/api/purchase');
-    const data = await resp.json();
-    if (!data.success) throw new Error('Falha ao carregar OCs');
-    return data.data;
+import { authedFetch } from '/js/core/auth.js';
+
+const tableBody      = document.getElementById('po-table-body');
+const statusEl       = document.getElementById('po-status');
+const btnNewPO       = document.getElementById('btn-open-new-po');
+
+const poModal        = document.getElementById('po-modal');
+const poForm         = document.getElementById('po-form');
+const poCloseBtn     = document.getElementById('btn-close-po-form');
+
+// campos do form
+const inputSupplierId    = document.getElementById('po-supplier-id');
+const inputNotesInternal = document.getElementById('po-notes-internal');
+const inputNotesSupplier = document.getElementById('po-notes-supplier');
+const inputItensRaw      = document.getElementById('po-itens-raw');
+const inputDescontoGeral = document.getElementById('po-desconto-geral');
+
+function showStatus(msg, isError = false) {
+    statusEl.textContent = msg || '';
+    statusEl.className = `text-xs ${isError ? 'text-red-600' : 'text-gray-500'}`;
 }
 
-async function apiGetPurchaseOrderDetails(id) {
-    const resp = await fetch(`/api/purchase/${id}`);
-    return resp.json();
+async function loadPOs() {
+    showStatus('Carregando ordens de compra...');
+    try {
+        const res = await authedFetch('/api/purchase');
+        const data = await res.json();
+
+        if (!data.success) {
+            console.error('Falha ao carregar OCs:', data.error || data.message);
+            tableBody.innerHTML = '';
+            showStatus('Erro ao carregar ordens de compra.', true);
+            return;
+        }
+
+        renderPOTable(data.data);
+        showStatus(`${data.data.length} OC(s) carregada(s).`);
+    } catch (err) {
+        console.error('Erro geral ao carregar OCs:', err);
+        tableBody.innerHTML = '';
+        showStatus('Erro de comunicação com servidor.', true);
+    }
 }
 
-async function apiReceivePurchase(payload) {
-    const resp = await fetch('/api/purchase/receive', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-    });
-    return resp.json();
-}
+function renderPOTable(list = []) {
+    tableBody.innerHTML = '';
 
-function renderPurchaseTable(rows) {
-    const tbody = document.getElementById('po-tbody');
-    const statusEl = document.getElementById('po-status');
-
-    tbody.innerHTML = '';
-    statusEl.textContent = `Encontradas ${rows.length} ordens de compra`;
-
-    rows.forEach(po => {
-        const tr = document.createElement('tr');
-        tr.className = 'border-b';
-
-        tr.innerHTML = `
-            <td class="px-2 py-1">${po.id}</td>
-            <td class="px-2 py-1">${po.supplier_name || ''}</td>
-            <td class="px-2 py-1">${po.status}</td>
-            <td class="px-2 py-1 text-right">R$ ${Number(po.total || 0).toFixed(2)}</td>
-            <td class="px-2 py-1 text-xs text-gray-500">${new Date(po.created_at).toLocaleString()}</td>
-            <td class="px-2 py-1 text-right">
-                <button class="text-blue-600 underline text-xs" data-open="${po.id}">
-                    Ver
-                </button>
-            </td>
+    if (!list.length) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="px-3 py-6 text-center text-gray-400 text-sm">
+                    Nenhuma ordem de compra registrada.
+                </td>
+            </tr>
         `;
-
-        tbody.appendChild(tr);
-    });
-
-    tbody.querySelectorAll('[data-open]').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const id = btn.getAttribute('data-open');
-            await openPurchaseDetails(id);
-        });
-    });
-}
-
-async function openPurchaseDetails(id) {
-    const details = await apiGetPurchaseOrderDetails(id);
-    if (!details.success) {
-        alert('Não foi possível carregar detalhes da OC #' + id);
         return;
     }
 
-    const { order, items, receipts } = details.data;
+    list.forEach(po => {
+        const tr = document.createElement('tr');
+        tr.className = 'bg-white hover:bg-gray-50';
 
-    let msg = `OC #${order.id}\nFornecedor: ${order.supplier_name}\nStatus: ${order.status}\nTotal: R$ ${Number(order.total || 0).toFixed(2)}\n\nITENS:\n`;
+        tr.innerHTML = `
+            <td class="px-3 py-2 text-gray-900 text-sm font-medium">
+                #${po.id}
+            </td>
 
-    items.forEach(it => {
-        msg += `- [${it.product_id}] ${it.product_name} x ${it.quantity} @ R$ ${Number(it.unit_cost).toFixed(2)} (total R$ ${Number(it.total_cost).toFixed(2)})\n`;
+            <td class="px-3 py-2 text-gray-800 text-sm">
+                ${po.supplier_name || '-'}
+            </td>
+
+            <td class="px-3 py-2 text-gray-700 text-xs font-semibold">
+                <span class="inline-block rounded px-2 py-1 ${
+                    po.status === 'received'
+                        ? 'bg-green-100 text-green-700'
+                        : po.status === 'canceled'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-gray-100 text-gray-700'
+                }">
+                    ${po.status}
+                </span>
+            </td>
+
+            <td class="px-3 py-2 text-right text-gray-900 text-sm font-semibold">
+                R$ ${Number(po.total_final || 0).toFixed(2)}
+            </td>
+
+            <td class="px-3 py-2 text-gray-700 text-xs">
+                ${po.created_at ? new Date(po.created_at).toLocaleString() : '-'}
+            </td>
+
+            <td class="px-3 py-2 text-gray-700 text-xs">
+                ${po.received_at ? new Date(po.received_at).toLocaleString() : '-'}
+            </td>
+        `;
+
+        tableBody.appendChild(tr);
     });
-
-    if (receipts.length > 0) {
-        msg += `\nRECEBIMENTOS:\n`;
-        receipts.forEach(rc => {
-            msg += `- ${rc.received_qty} un de ${rc.product_name} em ${new Date(rc.received_at).toLocaleString()} (${rc.branch || 'sem filial'}) por ${rc.received_by_name || '---'}\n`;
-        });
-    } else {
-        msg += `\nRECEBIMENTOS:\n(nenhum ainda)\n`;
-    }
-
-    alert(msg);
 }
 
-async function handleReceiveSubmit(ev) {
+function openPOModal() {
+    poModal.classList.remove('hidden', 'opacity-0');
+    poModal.classList.add('flex');
+    poForm.dataset.mode = 'create';
+
+    // limpa form
+    inputSupplierId.value    = '';
+    inputNotesInternal.value = '';
+    inputNotesSupplier.value = '';
+    inputItensRaw.value      = '';
+    inputDescontoGeral.value = '0.00';
+}
+
+function closePOModal() {
+    poModal.classList.add('hidden');
+    poModal.classList.remove('flex');
+}
+
+if (btnNewPO) {
+    btnNewPO.addEventListener('click', () => {
+        openPOModal();
+    });
+}
+
+if (poCloseBtn) {
+    poCloseBtn.addEventListener('click', () => {
+        closePOModal();
+    });
+}
+
+// salva nova OC
+poForm.addEventListener('submit', async (ev) => {
     ev.preventDefault();
 
-    const purchase_order_id = parseInt(document.getElementById('po-id').value);
-    const product_id        = parseInt(document.getElementById('po-product-id').value);
-    const received_qty      = parseFloat(document.getElementById('po-received-qty').value);
-    const branch            = document.getElementById('po-branch').value.trim();
-    const note              = document.getElementById('po-note').value.trim();
-    const feedback          = document.getElementById('po-feedback');
+    // parse rápido dos itens do textarea
+    // formato linha: product_id | qtd | custo_unitario
+    // ex:
+    // 1 | 50 | 18.5
+    // 2 | 10 | 7.2
+    const itens = [];
+    const linhas = inputItensRaw.value.split('\n');
+    for (const linha of linhas) {
+        const clean = linha.trim();
+        if (!clean) continue;
+        const partes = clean.split('|').map(v => v.trim());
+        if (partes.length < 3) continue;
 
-    feedback.textContent = 'Registrando recebimento...';
+        const productId = Number(partes[0]);
+        const qtd       = Number(partes[1]);
+        const custo     = Number(partes[2]);
 
-    const result = await apiReceivePurchase({
-        purchase_order_id,
-        product_id,
-        received_qty,
-        branch,
-        note,
-        received_by: 1 // TODO: trocar pelo usuário logado
-    });
-
-    if (!result.success) {
-        feedback.textContent = 'Erro: ' + (result.message || 'Falha ao registrar recebimento.');
-    } else {
-        feedback.textContent = `Recebido. Status da OC: ${result.data.order_status}. Novo estoque: ${result.data.new_stock}`;
-
-        // recarrega lista para refletir status
-        const rows = await apiGetPurchaseOrders();
-        renderPurchaseTable(rows);
-    }
-}
-
-async function initPage() {
-    // bind recebimento
-    const form = document.getElementById('po-receive-form');
-    if (form) {
-        form.addEventListener('submit', handleReceiveSubmit);
-    }
-
-    // botão "nova OC" (abre modal futuro)
-    const newBtn = document.getElementById('btn-new-po');
-    if (newBtn) {
-        newBtn.addEventListener('click', () => {
-            alert('TODO: abrir modal para criar nova ordem de compra (POST /api/purchase)');
+        itens.push({
+            product_id: productId,
+            descricao_item: null, // opcional, pode ser buscado do produto futuramente
+            quantidade: qtd,
+            unidade: 'un',
+            custo_unitario: custo
         });
     }
 
-    // carregar lista inicial
+    const payload = {
+        supplier_id: Number(inputSupplierId.value),
+        notes_internal: inputNotesInternal.value.trim() || null,
+        notes_supplier: inputNotesSupplier.value.trim() || null,
+        itens,
+        desconto_total: Number(inputDescontoGeral.value)
+    };
+
     try {
-        const rows = await apiGetPurchaseOrders();
-        renderPurchaseTable(rows);
+        const res = await authedFetch('/api/purchase', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+            alert('Erro ao salvar ordem de compra: ' + (data.error || data.message));
+            return;
+        }
+
+        closePOModal();
+        await loadPOs();
+        alert(`OC #${data.data.purchase_order_id} criada.`);
+
     } catch (err) {
-        console.error(err);
-        const statusEl = document.getElementById('po-status');
-        statusEl.textContent = 'Erro ao carregar OCs.';
+        console.error('Erro ao salvar OC:', err);
+        alert('Erro ao salvar ordem de compra.');
     }
+});
+
+function initPage() {
+    loadPOs();
 }
 
 export { initPage };

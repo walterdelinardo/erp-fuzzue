@@ -136,3 +136,57 @@ INSERT INTO roles_permissions (role, permissao) VALUES
 ('auditoria', 'estoque.ver_movimentacoes'),
 ('auditoria', 'compras.ver_historico'),
 ('auditoria', 'sistema.logs');
+
+-- -------------------------
+-- PERFIL: ESTOQUE
+-- (pode ver e editar estoque e ficha do produto)
+-- -------------------------
+INSERT INTO roles_permissions (role, permissao) VALUES
+('estoque', 'produtos.ver'),
+('estoque', 'produtos.editar');
+
+-- -------------------------
+-- PERFIL: COMPRAS
+-- (cost_price, fornecedor, etc.)
+-- -------------------------
+INSERT INTO roles_permissions (role, permissao) VALUES
+('compras', 'produtos.ver'),
+('compras', 'produtos.criar'),
+('compras', 'produtos.editar');
+
+-- -------------------------
+-- PERFIL: PDV
+-- (operador de caixa normalmente não cadastra produto)
+-- -------------------------
+INSERT INTO roles_permissions (role, permissao) VALUES
+('pdv', 'produtos.ver');
+
+-- -------------------------
+-- PERFIL: ADMIN
+-- (já tem permissões globais, mas vamos registrar explicitamente)
+-- -------------------------
+INSERT INTO roles_permissions (role, permissao) VALUES
+('admin', 'produtos.ver'),
+('admin', 'produtos.criar'),
+('admin', 'produtos.editar');
+
+-- COMPRAS precisa gerenciar fornecedores e OC
+INSERT INTO roles_permissions (role, permissao) VALUES
+('compras', 'fornecedores.ver'),
+('compras', 'fornecedores.criar'),
+('compras', 'fornecedores.editar'),
+('compras', 'ordens_compra.ver'),
+('compras', 'ordens_compra.criar');
+
+-- ESTOQUE pode ver ordens de compra (pra dar entrada física)
+INSERT INTO roles_permissions (role, permissao) VALUES
+('estoque', 'fornecedores.ver'),
+('estoque', 'ordens_compra.ver');
+
+-- ADMIN tem tudo explicitamente
+INSERT INTO roles_permissions (role, permissao) VALUES
+('admin', 'fornecedores.ver'),
+('admin', 'fornecedores.criar'),
+('admin', 'fornecedores.editar'),
+('admin', 'ordens_compra.ver'),
+('admin', 'ordens_compra.criar');

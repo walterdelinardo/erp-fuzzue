@@ -1,180 +1,212 @@
 /**
- * api/routes/suppliers.js
- * CRUD de Fornecedores
+ * server/modules/suppliers.js
+ *
+ * Rotas de Fornecedores
+ * Base: /api/suppliers
  */
-const express = require('express');
-const { pool, handleError } = require('../config/db');
 
+const express = require('express');
 const router = express.Router();
 
-/**
- * GET /api/suppliers
- * Lista todos os fornecedores
- */
-router.get('/', async (req, res) => {
-    try {
-        const result = await pool.query(
-            `SELECT id, name, document, email, phone, address, created_at
-             FROM suppliers
-             ORDER BY id DESC`
-        );
+const db = require('../config/db');
+const requireAuth = require('../middleware/requireAuth');
+const checkPermission = require('../middleware/checkPermission');
 
-        res.json({
-            success: true,
-            data: result.rows
-        });
-    } catch (err) {
-        handleError(res, err, "Erro ao listar fornecedores.");
-    }
-});
+function mapSupplierRow(row) {
+    return {
+        id: row.id,
+        name: row.name,
+        document: row.document,
+        phone: row.phone,
+        email: row.email,
+        address: row.address,
+        notes: row.notes,
+        is_active: row.is_active,
+        data_criacao: row.data_criacao,
+        data_atualizacao: row.data_atualizacao
+    };
+}
 
-/**
- * GET /api/suppliers/:id
- * Busca fornecedor específico
- */
-router.get('/:id', async (req, res) => {
-    const { id } = req.params;
+// GET /api/suppliers
+router.get(
+    '/',
+    requireAuth,
+    checkPermission('fornecedores.ver'),
+    async (req, res) => {
+        try {
+            const result = await db.query(`
+                SELECT
+                    id, name, document, phone, email, address,
+                    notes, is_active,
+                    data_criacao, data_atualizacao
+                FROM suppliers
+                WHERE ativo = TRUE
+                ORDER BY name ASC
+                LIMIT 200
+            `);
 
-    try {
-        const result = await pool.query(
-            `SELECT id, name, document, email, phone, address, created_at
-             FROM suppliers
-             WHERE id = $1`,
-            [id]
-        );
+            const suppliers = result.rows.map(mapSupplierRow);
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({
+            return res.json({
+                success: true,
+                message: 'Fornecedores carregados',
+                data: suppliers,
+                error: null
+            });
+        } catch (err) {
+            console.error('[Suppliers] Erro listando fornecedores:', err);
+            return res.status(500).json({
                 success: false,
-                message: "Fornecedor não encontrado."
+                message: 'Erro interno ao listar fornecedores',
+                data: null,
+                error: err.message
+            });
+        }
+    }
+);
+
+// POST /api/suppliers
+router.post(
+    '/',
+    requireAuth,
+    checkPermission('fornecedores.criar'),
+    async (req, res) => {
+        const {
+            name,
+            document,
+            phone,
+            email,
+            address,
+            notes
+        } = req.body;
+
+        if (!name) {
+            return res.status(400).json({
+                success: false,
+                message: 'Nome do fornecedor é obrigatório.',
+                data: null,
+                error: 'SUPPLIER_MISSING_NAME'
             });
         }
 
-        res.json({
-            success: true,
-            data: result.rows[0]
-        });
+        try {
+            const insertSql = `
+                INSERT INTO suppliers (
+                    name, document, phone, email,
+                    address, notes,
+                    is_active,
+                    data_criacao,
+                    ativo
+                )
+                VALUES ($1,$2,$3,$4,$5,$6,TRUE,NOW(),TRUE)
+                RETURNING *
+            `;
 
-    } catch (err) {
-        handleError(res, err, "Erro ao buscar fornecedor.");
-    }
-});
-
-/**
- * POST /api/suppliers
- * Cria um fornecedor
- */
-router.post('/', async (req, res) => {
-    const { name, document, email, phone, address } = req.body;
-
-    if (!name) {
-        return res.status(400).json({
-            success: false,
-            message: "Nome do fornecedor é obrigatório."
-        });
-    }
-
-    try {
-        const result = await pool.query(
-            `INSERT INTO suppliers
-                (name, document, email, phone, address)
-             VALUES
-                ($1,   $2,       $3,    $4,    $5)
-             RETURNING id, name, document, email, phone, address, created_at`,
-            [
+            const values = [
                 name,
                 document || null,
-                email || null,
                 phone || null,
-                address || null
-            ]
-        );
+                email || null,
+                address || null,
+                notes || null
+            ];
 
-        res.status(201).json({
-            success: true,
-            data: result.rows[0]
-        });
+            const result = await db.query(insertSql, values);
+            const newSupplier = mapSupplierRow(result.rows[0]);
 
-    } catch (err) {
-        handleError(res, err, "Erro ao criar fornecedor.");
+            return res.status(201).json({
+                success: true,
+                message: 'Fornecedor criado com sucesso.',
+                data: newSupplier,
+                error: null
+            });
+
+        } catch (err) {
+            console.error('[Suppliers] Erro criando fornecedor:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Erro interno ao criar fornecedor',
+                data: null,
+                error: err.message
+            });
+        }
     }
-});
+);
 
-/**
- * PUT /api/suppliers/:id
- * Atualiza um fornecedor
- */
-router.put('/:id', async (req, res) => {
-    const { id } = req.params;
-    const { name, document, email, phone, address } = req.body;
+// PUT /api/suppliers/:id
+router.put(
+    '/:id',
+    requireAuth,
+    checkPermission('fornecedores.editar'),
+    async (req, res) => {
+        const { id } = req.params;
+        const {
+            name,
+            document,
+            phone,
+            email,
+            address,
+            notes,
+            is_active
+        } = req.body;
 
-    try {
-        const result = await pool.query(
-            `UPDATE suppliers
-             SET name=$1,
-                 document=$2,
-                 email=$3,
-                 phone=$4,
-                 address=$5
-             WHERE id=$6
-             RETURNING id, name, document, email, phone, address, created_at`,
-            [
-                name,
-                document,
-                email,
-                phone,
-                address,
+        try {
+            const updateSql = `
+                UPDATE suppliers
+                SET
+                    name = $1,
+                    document = $2,
+                    phone = $3,
+                    email = $4,
+                    address = $5,
+                    notes = $6,
+                    is_active = $7,
+                    data_atualizacao = NOW()
+                WHERE id = $8
+                RETURNING *
+            `;
+
+            const values = [
+                name || null,
+                document || null,
+                phone || null,
+                email || null,
+                address || null,
+                notes || null,
+                (is_active !== undefined ? is_active : true),
                 id
-            ]
-        );
+            ];
 
-        if (result.rowCount === 0) {
-            return res.status(404).json({
+            const result = await db.query(updateSql, values);
+
+            if (result.rowCount === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Fornecedor não encontrado.',
+                    data: null,
+                    error: 'SUPPLIER_NOT_FOUND'
+                });
+            }
+
+            const updated = mapSupplierRow(result.rows[0]);
+
+            return res.json({
+                success: true,
+                message: 'Fornecedor atualizado com sucesso.',
+                data: updated,
+                error: null
+            });
+
+        } catch (err) {
+            console.error('[Suppliers] Erro atualizando fornecedor:', err);
+            return res.status(500).json({
                 success: false,
-                message: "Fornecedor não encontrado."
+                message: 'Erro interno ao atualizar fornecedor',
+                data: null,
+                error: err.message
             });
         }
-
-        res.json({
-            success: true,
-            data: result.rows[0]
-        });
-
-    } catch (err) {
-        handleError(res, err, "Erro ao atualizar fornecedor.");
     }
-});
-
-/**
- * DELETE /api/suppliers/:id
- * Remove fornecedor
- */
-router.delete('/:id', async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        // Regra: se você quiser impedir excluir fornecedor ainda vinculado a produto,
-        // podemos validar aqui antes de excluir. Por enquanto: exclui direto.
-        const result = await pool.query(
-            `DELETE FROM suppliers WHERE id=$1`,
-            [id]
-        );
-
-        if (result.rowCount === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "Fornecedor não encontrado."
-            });
-        }
-
-        res.json({
-            success: true,
-            message: "Fornecedor removido com sucesso."
-        });
-
-    } catch (err) {
-        handleError(res, err, "Erro ao excluir fornecedor.");
-    }
-});
+);
 
 module.exports = router;
