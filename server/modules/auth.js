@@ -2,20 +2,38 @@
  * server/modules/auth.js
  * Rotas de autenticação (/api/auth)
  *
- * Responsabilidade:
  * - POST /api/auth/login
- *   Valida credenciais e retorna dados básicos do usuário logado.
- *
- * Observação: a senha ainda está sendo comparada em texto puro (não seguro).
- * TODO: implementar hash seguro (ex: bcrypt.compare).
+ *   Faz login, valida credenciais, gera JWT.
  */
 
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 
 const router = express.Router();
 
-// ROTA: POST /api/auth/login
+// Tempo de expiração do token (ajustável)
+const TOKEN_EXPIRATION = '8h'; // ex.: "8h", "1d", "30m"
+
+/**
+ * Gera o token JWT assinado com os dados essenciais do usuário.
+ */
+function generateJwtToken(userRow) {
+    return jwt.sign(
+        {
+            id: userRow.id,
+            username: userRow.username,
+            fullName: userRow.full_name,
+            role: userRow.role
+        },
+        process.env.JWT_SECRET,
+        {
+            expiresIn: TOKEN_EXPIRATION
+        }
+    );
+}
+
+// POST /api/auth/login
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
@@ -32,23 +50,22 @@ router.post('/login', async (req, res) => {
     console.log(`[Auth] Tentativa de login para usuário: ${username}`);
 
     try {
-        // Busca o usuário no banco de dados pelo username
+        // Buscar usuário
         const result = await db.query(
             `SELECT 
-                id, 
-                username, 
-                password_hash, 
-                full_name, 
-                role, 
-                is_active 
-             FROM users 
+                id,
+                username,
+                password_hash,
+                full_name,
+                role,
+                is_active
+             FROM users
              WHERE username = $1`,
             [username]
         );
 
         const user = result.rows[0];
 
-        // Verifica se o usuário existe
         if (!user) {
             console.log(`[Auth] Falha: Usuário '${username}' não encontrado.`);
             return res.status(401).json({
@@ -59,9 +76,8 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        // Verifica se o usuário está ativo
         if (!user.is_active) {
-            console.log(`[Auth] Falha: Usuário '${username}' está inativo.`);
+            console.log(`[Auth] Falha: Usuário '${username}' inativo.`);
             return res.status(403).json({
                 success: false,
                 message: 'Este usuário está desativado.',
@@ -70,12 +86,11 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        // COMPARAÇÃO DE SENHA (texto simples)
-        // TODO: substituir por hash seguro com bcrypt.compare
+        // TODO Segurança real:
+        // Trocar essa comparação simples por bcrypt.compare(password, user.password_hash)
         const isPasswordCorrect = (password === user.password_hash);
-
         if (!isPasswordCorrect) {
-            console.log(`[Auth] Falha: Senha incorreta para usuário '${username}'.`);
+            console.log(`[Auth] Falha: Senha incorreta para '${username}'.`);
             return res.status(401).json({
                 success: false,
                 message: 'Usuário ou senha inválidos.',
@@ -85,9 +100,12 @@ router.post('/login', async (req, res) => {
         }
 
         // Login OK
-        console.log(`[Auth] Sucesso: Login bem-sucedido para usuário '${username}'.`);
+        console.log(`[Auth] Sucesso: Login OK para '${username}'.`);
 
-        // Monta payload enxuto que irá para o frontend
+        // Gera token JWT
+        const token = generateJwtToken(user);
+
+        // Monta payload seguro para o frontend
         const safeUser = {
             id: user.id,
             username: user.username,
@@ -98,14 +116,15 @@ router.post('/login', async (req, res) => {
         return res.status(200).json({
             success: true,
             message: 'Login bem-sucedido!',
-            data: safeUser,
+            data: {
+                user: safeUser,
+                token
+            },
             error: null
-            // Em produção real: gerar e retornar token JWT aqui.
-            // token: generateJwtToken(user)
         });
 
     } catch (err) {
-        // Usa o handler padronizado do projeto
+        console.error('[Auth] Erro de login:', err);
         return db.handleError(
             res,
             err,

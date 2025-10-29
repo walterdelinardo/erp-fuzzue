@@ -1,12 +1,13 @@
 // public/js/core/auth.js
-// Camada de autenticação e sessão do ERP Fuzzue (frontend).
-// - Gerencia sessão do usuário via sessionStorage
-// - Faz login via /api/auth/login
-// - Controla visibilidade do app-wrapper (interface principal)
+// Camada de autenticação / sessão do ERP Fuzzue (frontend).
+// - Faz login e salva { user, token } no sessionStorage
+// - Valida sessão ao carregar app
+// - Fornece helpers para fazer fetch autenticado
 
 const SESSION_KEY = 'fuzzue_user';
+const TOKEN_KEY = 'fuzzue_token';
 
-// Lê o usuário logado salvo no sessionStorage
+// Lê o usuário logado salvo
 function getCurrentUser() {
     const raw = sessionStorage.getItem(SESSION_KEY);
     if (!raw) return null;
@@ -17,29 +18,43 @@ function getCurrentUser() {
     }
 }
 
-// Salva usuário logado (chamado no login)
+// Salva user
 function setCurrentUser(user) {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
 }
 
-// Remove sessão (logout)
+// Lê token JWT
+function getToken() {
+    return sessionStorage.getItem(TOKEN_KEY) || null;
+}
+
+// Salva token JWT
+function setToken(token) {
+    sessionStorage.setItem(TOKEN_KEY, token);
+}
+
+// Limpa sessão (logout)
 function clearCurrentUser() {
     sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
 }
 
 /**
- * Tenta login na API.
- * Espera que o backend responda no formato padrão ERP:
+ * Faz login na API:
+ * - POST /api/auth/login
+ * - Espera retorno no formato padrão:
+ *
  * {
- *   success: true/false,
- *   message: "...",
- *   data: { id, fullName, username, ... } | null,
- *   error: null | "detalhe"
+ *   success: true,
+ *   data: {
+ *     user: { id, username, fullName, role },
+ *     token: "JWT..."
+ *   }
  * }
  *
- * Se login OK:
- *  - salva o usuário em sessionStorage
- *  - redireciona para /index.html
+ * Se ok:
+ *   - salva user e token
+ *   - redireciona para /index.html
  */
 async function attemptLogin(username, password) {
     const resp = await fetch('/api/auth/login', {
@@ -55,8 +70,7 @@ async function attemptLogin(username, password) {
         throw new Error('Resposta inválida do servidor de autenticação.');
     }
 
-    // Falha HTTP explícita (ex.: 401)
-    if (!resp.ok) {
+    if (!resp.ok || !data.success) {
         throw new Error(
             data?.message ||
             data?.error ||
@@ -64,51 +78,77 @@ async function attemptLogin(username, password) {
         );
     }
 
-    // Falha lógica segundo o contrato da API
-    if (!data.success) {
-        throw new Error(
-            data?.message ||
-            data?.error ||
-            'Credenciais inválidas.'
-        );
+    // Esperamos data.data.user e data.data.token
+    const safeUser = data.data?.user;
+    const token = data.data?.token;
+
+    if (!safeUser || !token) {
+        throw new Error('Resposta de login incompleta.');
     }
 
-    // OK → salva usuário
-    // No padrão oficial, o usuário vem em data.data
-    const userPayload = data.data || {};
-    setCurrentUser(userPayload);
+    // salva sessão
+    setCurrentUser(safeUser);
+    setToken(token);
 
-    // Redireciona para o app principal
+    // vai para app principal
     window.location.href = '/index.html';
 }
 
 /**
- * Checa se há um usuário logado.
- *  - Se NÃO houver, redireciona para /login.html
- *  - Se houver, remove "hidden" do #app-wrapper
- *
- * Essa função deve ser chamada no início da aplicação (main.js / router.js)
+ * Garante que o usuário está autenticado:
+ * - Se não houver user/token, manda pra /login.html
+ * - Se houver, mostra a UI principal
  */
 async function initializeAuth() {
     const user = getCurrentUser();
+    const token = getToken();
     const appWrapper = document.getElementById('app-wrapper');
 
-    if (!user) {
-        // Não autenticado → manda pro login
+    if (!user || !token) {
         window.location.href = '/login.html';
         return;
     }
 
-    // Autenticado → revela interface principal
     if (appWrapper) {
         appWrapper.classList.remove('hidden');
     }
+}
+
+/**
+ * Helper para fazer requisições autenticadas para a API.
+ * Já injeta Authorization: Bearer <token>.
+ *
+ * Exemplo de uso:
+ *
+ *   const resp = await authedFetch('/api/pdv/finalizar-venda', {
+ *     method: 'POST',
+ *     body: JSON.stringify(payload),
+ *     headers: { 'Content-Type': 'application/json' }
+ *   });
+ *
+ *   const data = await resp.json();
+ */
+async function authedFetch(url, options = {}) {
+    const token = getToken();
+
+    const headers = {
+        ...(options.headers || {}),
+        'Authorization': `Bearer ${token}`
+    };
+
+    return fetch(url, {
+        ...options,
+        headers
+    });
 }
 
 export {
     initializeAuth,
     attemptLogin,
     getCurrentUser,
+    getToken,
     setCurrentUser,
+    setToken,
     clearCurrentUser,
+    authedFetch
 };
