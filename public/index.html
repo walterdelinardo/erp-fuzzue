@@ -1,233 +1,204 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8" />
-    <title>Fuzzue ERP</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <title>Fuzzue ERP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- Tailwind -->
-    <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind (ok em dev; em prod usar build/CLI) -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Ícones -->
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-        crossorigin="anonymous"
-        referrerpolicy="no-referrer"
-    />
+  <!-- Ícones -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
 </head>
 <body class="bg-gray-100 text-gray-800">
 
-    <!-- WRAPPER DO APP (mostrado após login) -->
-    <div id="app-wrapper" class="hidden h-screen flex">
+  <!-- WRAPPER DO APP (mostrado após login) -->
+  <div id="app-wrapper" class="hidden h-screen flex">
 
-        <!-- SIDEBAR -->
-        <aside class="w-64 bg-gray-900 text-gray-100 flex flex-col">
-            <div class="p-4 text-xl font-semibold border-b border-gray-700">
-                Fuzzue ERP
-            </div>
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-gray-900 text-gray-100 flex flex-col">
+      <div class="p-4 text-xl font-semibold border-b border-gray-700">
+        Fuzzue ERP
+      </div>
 
-            <nav class="flex-1 p-4 space-y-2 text-sm">
-                <button data-module="dashboard" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
-                    <i class="fa-solid fa-chart-line text-green-400"></i>
-                    <span>Dashboard</span>
-                </button>
+      <nav class="flex-1 p-4 space-y-2 text-sm">
+        <button data-module="dashboard" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
+          <i class="fa-solid fa-chart-line text-green-400"></i>
+          <span>Dashboard</span>
+        </button>
 
-                <button data-module="products" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
-                    <i class="fa-solid fa-box text-yellow-400"></i>
-                    <span>Produtos</span>
-                </button>
+        <button data-module="products" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
+          <i class="fa-solid fa-box text-yellow-400"></i>
+          <span>Produtos</span>
+        </button>
 
-                <button data-module="suppliers" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
-                    <i class="fa-solid fa-truck text-blue-400"></i>
-                    <span>Fornecedores</span>
-                </button>
+        <button data-module="suppliers" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
+          <i class="fa-solid fa-truck text-blue-400"></i>
+          <span>Fornecedores</span>
+        </button>
 
-                <button data-module="inventory" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
-                    <i class="fa-solid fa-warehouse text-purple-400"></i>
-                    <span>Estoque</span>
-                </button>
+        <button data-module="inventory" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
+          <i class="fa-solid fa-warehouse text-purple-400"></i>
+          <span>Estoque</span>
+        </button>
 
-                <button data-module="purchase" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
-                    <i class="fa-solid fa-file-invoice-dollar text-orange-400"></i>
-                    <span>Ordens de Compra</span>
-                </button>
+        <button data-module="purchase" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
+          <i class="fa-solid fa-file-invoice-dollar text-orange-400"></i>
+          <span>Ordens de Compra</span>
+        </button>
 
-                <button data-module="sales" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
-                    <i class="fa-solid fa-receipt text-teal-400"></i>
-                    <span>Vendas</span>
-                </button>
+        <button data-module="sales" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
+          <i class="fa-solid fa-receipt text-teal-400"></i>
+          <span>Vendas</span>
+        </button>
 
-                <button data-module="pdv" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
-                    <i class="fa-solid fa-cash-register text-pink-400"></i>
-                    <span>PDV</span>
-                </button>
-                
-                <button data-module="finance" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
-                    <i class="fa-solid fa-sack-dollar text-green-400"></i>
-                    <span>Financeiro</span>
-                </button>
+        <button data-module="pdv" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
+          <i class="fa-solid fa-cash-register text-pink-400"></i>
+          <span>PDV</span>
+        </button>
 
-                <button data-module="finance" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
-                    <i class="fa-solid fa-sack-dollar text-green-400"></i>
-                    <span>Financeiro</span>
-                </button>
+        <button data-module="finance" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
+          <i class="fa-solid fa-sack-dollar text-green-400"></i>
+          <span>Financeiro</span>
+        </button>
 
-                <button data-module="payables" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
-                    <i class="fa-solid fa-money-bill-transfer text-red-400"></i>
-                    <span>A Pagar</span>
-                </button>
+        <button data-module="payables" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
+          <i class="fa-solid fa-money-bill-transfer text-red-400"></i>
+          <span>A Pagar</span>
+        </button>
 
-                <button data-module="receivables" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
-                    <i class="fa-solid fa-money-bill-wave text-green-400"></i>
-                    <span>A Receber</span>
-                </button>
+        <button data-module="receivables" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
+          <i class="fa-solid fa-money-bill-wave text-green-400"></i>
+          <span>A Receber</span>
+        </button>
 
-                <button data-module="finance_consolidado" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
-                    <i class="fa-solid fa-building-columns text-blue-400"></i>
-                    <span>Financeiro Geral</span>
-                </button>
-            </nav>
+        <button data-module="finance_consolidado" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800 text-left">
+          <i class="fa-solid fa-building-columns text-blue-400"></i>
+          <span>Financeiro Geral</span>
+        </button>
+      </nav>
 
-            <div class="p-4 border-t border-gray-700 text-xs text-gray-400">
-                <div id="welcome-user" class="font-medium text-gray-200">Olá, —</div>
-                <button id="btn-logout" class="mt-2 w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded text-center text-xs">
-                    Sair
-                </button>
-            </div>
-        </aside>
+      <div class="p-4 border-t border-gray-700 text-xs text-gray-400">
+        <div id="welcome-user" class="font-medium text-gray-200">Olá, —</div>
+        <button id="btn-logout" class="mt-2 w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded text-center text-xs">
+          Sair
+        </button>
+      </div>
+    </aside>
 
-        <!-- ÁREA DINÂMICA -->
-        <main id="app-content" class="flex-1 overflow-y-auto p-6 space-y-8">
-            <!-- O HTML dos módulos é injetado aqui pelo router.js -->
-        </main>
-    </div>
+    <!-- ÁREA DINÂMICA -->
+    <main id="app-content" class="flex-1 overflow-y-auto p-6 space-y-8">
+      <!-- O HTML dos módulos é injetado aqui pelo router.js -->
+    </main>
+  </div>
 
-    <!-- MODAL: FORM PRODUTO (global) -->
-    <div id="product-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-lg w-full max-w-xl p-4 text-sm">
-            <div class="flex items-start justify-between mb-3">
-                <div class="font-semibold text-gray-800" id="product-form-title">Novo Produto</div>
-                <button id="btn-close-form" class="text-gray-400 hover:text-gray-600">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-
-            <form id="product-form" class="grid grid-cols-2 gap-4" data-mode="create">
-                <input type="hidden" id="prod-id">
-
-                <div class="col-span-2">
-                    <label class="block text-gray-600 text-xs mb-1">Nome</label>
-                    <input id="prod-name" class="w-full border rounded px-2 py-1" required>
-                </div>
-
-                <div>
-                    <label class="block text-gray-600 text-xs mb-1">SKU</label>
-                    <input id="prod-sku" class="w-full border rounded px-2 py-1">
-                </div>
-
-                <div>
-                    <label class="block text-gray-600 text-xs mb-1">NCM</label>
-                    <input id="prod-ncm" class="w-full border rounded px-2 py-1">
-                </div>
-
-                <div>
-                    <label class="block text-gray-600 text-xs mb-1">Unidade</label>
-                    <input id="prod-unit" class="w-full border rounded px-2 py-1" placeholder="un, kg, m...">
-                </div>
-
-                <div>
-                    <label class="block text-gray-600 text-xs mb-1">Categoria</label>
-                    <input id="prod-category" class="w-full border rounded px-2 py-1">
-                </div>
-
-                <div class="col-span-2">
-                    <label class="block text-gray-600 text-xs mb-1">Descrição</label>
-                    <input id="prod-description" class="w-full border rounded px-2 py-1">
-                </div>
-
-                <div>
-                    <label class="block text-gray-600 text-xs mb-1">Custo (R$)</label>
-                    <input id="prod-cost" type="number" step="0.01" class="w-full border rounded px-2 py-1">
-                </div>
-
-                <div>
-                    <label class="block text-gray-600 text-xs mb-1">Preço Venda (R$)</label>
-                    <input id="prod-price" type="number" step="0.01" class="w-full border rounded px-2 py-1">
-                </div>
-
-                <div>
-                    <label class="block text-gray-600 text-xs mb-1">Estoque Inicial</label>
-                    <input id="prod-stock" type="number" step="0.001" class="w-full border rounded px-2 py-1">
-                </div>
-
-                <div>
-                    <label class="block text-gray-600 text-xs mb-1">Fornecedor (ID)</label>
-                    <input id="prod-supplier" class="w-full border rounded px-2 py-1" placeholder="ex: 3">
-                </div>
-
-                <div class="col-span-2 flex justify-end mt-2">
-                    <button class="bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium px-3 py-2 rounded-lg">
-                        Salvar
-                    </button>
-                </div>
-            </form>
-
-            <div id="login-message" class="text-xs text-gray-500 mt-2"></div>
+  <!-- MODAIS GLOBAIS (produto / fornecedor) mantidos como estavam -->
+  <div id="product-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-xl p-4 text-sm">
+      <div class="flex items-start justify-between mb-3">
+        <div class="font-semibold text-gray-800" id="product-form-title">Novo Produto</div>
+        <button id="btn-close-form" class="text-gray-400 hover:text-gray-600">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <form id="product-form" class="grid grid-cols-2 gap-4" data-mode="create">
+        <input type="hidden" id="prod-id">
+        <div class="col-span-2">
+          <label class="block text-gray-600 text-xs mb-1">Nome</label>
+          <input id="prod-name" class="w-full border rounded px-2 py-1" required>
         </div>
-    </div>
-
-    <!-- MODAL: FORM FORNECEDOR (global) -->
-    <div id="supplier-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-lg w-full max-w-lg p-4 text-sm">
-            <div class="flex items-start justify-between mb-3">
-                <div class="font-semibold text-gray-800" id="supplier-form-title">Novo Fornecedor</div>
-                <button id="btn-close-supplier-form" class="text-gray-400 hover:text-gray-600">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-
-            <form id="supplier-form" class="grid grid-cols-2 gap-4" data-mode="create">
-                <input type="hidden" id="sup-id">
-
-                <div class="col-span-2">
-                    <label class="block text-gray-600 text-xs mb-1">Nome</label>
-                    <input id="sup-name" class="w-full border rounded px-2 py-1" required>
-                </div>
-
-                <div>
-                    <label class="block text-gray-600 text-xs mb-1">CNPJ/CPF</label>
-                    <input id="sup-document" class="w-full border rounded px-2 py-1">
-                </div>
-
-                <div>
-                    <label class="block text-gray-600 text-xs mb-1">Telefone</label>
-                    <input id="sup-phone" class="w-full border rounded px-2 py-1">
-                </div>
-
-                <div>
-                    <label class="block text-gray-600 text-xs mb-1">Email</label>
-                    <input id="sup-email" type="email" class="w-full border rounded px-2 py-1">
-                </div>
-
-                <div class="col-span-2">
-                    <label class="block text-gray-600 text-xs mb-1">Endereço / Obs</label>
-                    <input id="sup-address" class="w-full border rounded px-2 py-1">
-                </div>
-
-                <div class="col-span-2 flex justify-end mt-2">
-                    <button class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-2 rounded-lg">
-                        Salvar
-                    </button>
-                </div>
-            </form>
+        <div>
+          <label class="block text-gray-600 text-xs mb-1">SKU</label>
+          <input id="prod-sku" class="w-full border rounded px-2 py-1">
         </div>
+        <div>
+          <label class="block text-gray-600 text-xs mb-1">NCM</label>
+          <input id="prod-ncm" class="w-full border rounded px-2 py-1">
+        </div>
+        <div>
+          <label class="block text-gray-600 text-xs mb-1">Unidade</label>
+          <input id="prod-unit" class="w-full border rounded px-2 py-1" placeholder="un, kg, m...">
+        </div>
+        <div>
+          <label class="block text-gray-600 text-xs mb-1">Categoria</label>
+          <input id="prod-category" class="w-full border rounded px-2 py-1">
+        </div>
+        <div class="col-span-2">
+          <label class="block text-gray-600 text-xs mb-1">Descrição</label>
+          <input id="prod-description" class="w-full border rounded px-2 py-1">
+        </div>
+        <div>
+          <label class="block text-gray-600 text-xs mb-1">Custo (R$)</label>
+          <input id="prod-cost" type="number" step="0.01" class="w-full border rounded px-2 py-1">
+        </div>
+        <div>
+          <label class="block text-gray-600 text-xs mb-1">Preço Venda (R$)</label>
+          <input id="prod-price" type="number" step="0.01" class="w-full border rounded px-2 py-1">
+        </div>
+        <div>
+          <label class="block text-gray-600 text-xs mb-1">Estoque Inicial</label>
+          <input id="prod-stock" type="number" step="0.001" class="w-full border rounded px-2 py-1">
+        </div>
+        <div>
+          <label class="block text-gray-600 text-xs mb-1">Fornecedor (ID)</label>
+          <input id="prod-supplier" class="w-full border rounded px-2 py-1" placeholder="ex: 3">
+        </div>
+        <div class="col-span-2 flex justify-end mt-2">
+          <button class="bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium px-3 py-2 rounded-lg">
+            Salvar
+          </button>
+        </div>
+      </form>
+      <div id="login-message" class="text-xs text-gray-500 mt-2"></div>
     </div>
+  </div>
 
-    <!-- Ponto de entrada do app.
-         main.js vai importar router.js, auth.js, etc.,
-         mostrar o app-wrapper se o usuário estiver autenticado,
-         e carregar o módulo inicial. -->
-    <script type="module" src="/js/main.js"></script>
+  <div id="supplier-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-lg p-4 text-sm">
+      <div class="flex items-start justify-between mb-3">
+        <div class="font-semibold text-gray-800" id="supplier-form-title">Novo Fornecedor</div>
+        <button id="btn-close-supplier-form" class="text-gray-400 hover:text-gray-600">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <form id="supplier-form" class="grid grid-cols-2 gap-4" data-mode="create">
+        <input type="hidden" id="sup-id">
+        <div class="col-span-2">
+          <label class="block text-gray-600 text-xs mb-1">Nome</label>
+          <input id="sup-name" class="w-full border rounded px-2 py-1" required>
+        </div>
+        <div>
+          <label class="block text-gray-600 text-xs mb-1">CNPJ/CPF</label>
+          <input id="sup-document" class="w-full border rounded px-2 py-1">
+        </div>
+        <div>
+          <label class="block text-gray-600 text-xs mb-1">Telefone</label>
+          <input id="sup-phone" class="w-full border rounded px-2 py-1">
+        </div>
+        <div>
+          <label class="block text-gray-600 text-xs mb-1">Email</label>
+          <input id="sup-email" type="email" class="w-full border rounded px-2 py-1">
+        </div>
+        <div class="col-span-2">
+          <label class="block text-gray-600 text-xs mb-1">Endereço / Obs</label>
+          <input id="sup-address" class="w-full border rounded px-2 py-1">
+        </div>
+        <div class="col-span-2 flex justify-end mt-2">
+          <button class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-2 rounded-lg">
+            Salvar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Ponto de entrada único -->
+  <script type="module" src="/js/core/router.js"></script>
 </body>
 </html>

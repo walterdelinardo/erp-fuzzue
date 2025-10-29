@@ -25,9 +25,7 @@
         <span class="text-orange-500">F</span><span>Z</span>
       </div>
 
-      <div class="text-xl font-extrabold text-gray-900 tracking-tight">
-        SISTEMA FUZZUE
-      </div>
+      <div class="text-xl font-extrabold text-gray-900 tracking-tight">SISTEMA FUZZUE</div>
       <div class="text-sm text-gray-500 font-medium">Acesso Administrativo</div>
       <div class="text-[13px] text-gray-500 mt-2 leading-snug text-center">
         Entre com suas credenciais para acessar o painel.
@@ -40,14 +38,7 @@
         <label class="block text-gray-700 text-xs font-semibold mb-1">Usuário</label>
         <div class="flex items-center border rounded-lg px-3 py-2 bg-white">
           <i class="fa-solid fa-user text-gray-400 mr-2"></i>
-          <input
-            id="login-username"
-            type="text"
-            class="flex-1 outline-none text-gray-800"
-            placeholder="admin"
-            autocomplete="username"
-            required
-          />
+          <input id="login-username" type="text" class="flex-1 outline-none text-gray-800" placeholder="admin" autocomplete="username" required />
         </div>
       </div>
 
@@ -55,22 +46,11 @@
         <label class="block text-gray-700 text-xs font-semibold mb-1">Senha</label>
         <div class="flex items-center border rounded-lg px-3 py-2 bg-white">
           <i class="fa-solid fa-lock text-gray-400 mr-2"></i>
-          <input
-            id="login-password"
-            type="password"
-            class="flex-1 outline-none text-gray-800"
-            placeholder="••••••••"
-            autocomplete="current-password"
-            required
-          />
+          <input id="login-password" type="password" class="flex-1 outline-none text-gray-800" placeholder="••••••••" autocomplete="current-password" required />
         </div>
       </div>
 
-      <button
-        id="btn-login"
-        type="submit"
-        class="w-full bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"
-      >
+      <button id="btn-login" type="submit" class="w-full bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors">
         Entrar
       </button>
     </form>
@@ -88,7 +68,7 @@
 
   <!-- SCRIPT DE LOGIN -->
   <script type="module">
-    import { attemptLogin } from './js/core/auth.js';
+    import { attemptLogin } from '/js/core/auth.js';
 
     const form = document.getElementById('login-form');
     const feedbackEl = document.getElementById('login-feedback');
@@ -105,7 +85,7 @@
 
       try {
         await attemptLogin(username, password);
-        // se o login for bem-sucedido, o attemptLogin redireciona automaticamente
+        // sucesso: attemptLogin redireciona pra /index.html
       } catch (err) {
         console.error('[Login] Erro:', err);
         feedbackEl.textContent = err.message || 'Falha ao autenticar.';
