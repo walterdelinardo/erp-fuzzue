@@ -2,10 +2,10 @@
   "name": "fuzzue-erp-backend",
   "version": "1.0.1",
   "description": "Backend para o ERP Fuzzue (Node.js/PostgreSQL)",
-  "main": "server.js",
+  "main": "server/server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
+    "start": "node server/server.js",
+    "dev": "node --watch server/server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
