@@ -1,3 +1,15 @@
+// public/js/modules/pdv/pdv.js
+//
+// Frontend do PDV
+// - controle de carrinho
+// - busca de produtos
+// - descontos
+// - finalização de venda
+//
+// Agora integrado com autenticação JWT via authedFetch()
+
+import { authedFetch } from '/js/core/auth.js';
+
 // ------------------------------
 // ESTADO DO PDV
 // ------------------------------
@@ -49,7 +61,7 @@ searchInput.addEventListener('input', () => {
 
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
-        fetch(`/api/pdv/search-products?query=${encodeURIComponent(term)}`)
+        authedFetch(`/api/pdv/search-products?query=${encodeURIComponent(term)}`)
             .then(res => res.json())
             .then(resp => {
                 if (!resp.success) {
@@ -254,7 +266,7 @@ unlockDiscountBtn.addEventListener('click', () => {
     const senha = window.prompt('Digite a senha de administrador para liberar descontos:');
     if (!senha) return;
 
-    fetch('/api/pdv/validate-admin', {
+    authedFetch('/api/pdv/validate-admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ senha })
@@ -268,12 +280,12 @@ unlockDiscountBtn.addEventListener('click', () => {
             unlockDiscountBtn.textContent = '🔓';
             renderCart(); // re-render pra liberar inputs de desconto item
         } else {
-            alert('Senha inválida');
+            alert('Sem permissão para conceder desconto ou senha inválida.');
         }
     })
     .catch(err => {
-        console.error('Erro ao validar senha:', err);
-        alert('Erro ao validar senha');
+        console.error('Erro ao validar senha/admin:', err);
+        alert('Erro ao validar desconto.');
     });
 });
 
@@ -386,7 +398,7 @@ confirmarPagamentoBtn.addEventListener('click', () => {
         ]
     };
 
-    fetch('/api/pdv/finalizar-venda', {
+    authedFetch('/api/pdv/finalizar-venda', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payloadVenda)
