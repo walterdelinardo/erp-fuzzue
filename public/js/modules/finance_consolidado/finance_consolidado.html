@@ -1,0 +1,55 @@
+<div class="space-y-8">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+      <h1 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+        <i class="fa-solid fa-building-columns text-blue-600"></i>
+        Visão Consolidada Financeira
+      </h1>
+      <p class="text-sm text-gray-500">
+        Saldo de caixa/banco, contas a pagar e a receber por filial. Ordenado por risco.
+      </p>
+    </div>
+
+    <div class="text-xs text-gray-500" id="fc-status">
+      Carregando...
+    </div>
+  </div>
+
+  <!-- Cards Totais Globais -->
+  <div id="fc-global-cards" class="grid gap-4 md:grid-cols-4 text-sm">
+    <!-- preenchido via JS -->
+  </div>
+
+  <!-- Ranking de Filiais -->
+  <div class="border border-gray-200 rounded-lg bg-white text-sm overflow-x-auto">
+    <table class="min-w-full">
+      <thead class="bg-gray-100 text-gray-700 text-[11px] uppercase tracking-wide">
+        <tr>
+          <th class="px-3 py-2 text-left font-medium">Filial</th>
+          <th class="px-3 py-2 text-left font-medium">Cidade/UF</th>
+
+          <th class="px-3 py-2 text-right font-medium">Saldo Contas</th>
+
+          <th class="px-3 py-2 text-right font-medium text-red-700">A Pagar (aberto)</th>
+          <th class="px-3 py-2 text-right font-medium text-red-700">A Pagar (vencido)</th>
+
+          <th class="px-3 py-2 text-right font-medium text-green-700">A Receber (aberto)</th>
+          <th class="px-3 py-2 text-right font-medium text-green-700">A Receber (vencido)</th>
+
+          <th class="px-3 py-2 text-right font-medium">Risco Liquidez</th>
+        </tr>
+      </thead>
+      <tbody id="fc-table-body" class="divide-y divide-gray-200">
+        <!-- preenchido via JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <div class="text-[11px] text-gray-400 leading-relaxed">
+    <p><b>Saldo Contas</b>: soma caixa físico, banco e PIX da filial.</p>
+    <p><b>Risco Liquidez</b>: (A Pagar Aberto) - (A Receber Aberto). Quanto maior, mais aperto de caixa imediato.</p>
+  </div>
+
+</div>

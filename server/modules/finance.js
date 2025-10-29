@@ -73,6 +73,73 @@ async function logAudit(client, {
 }
 
 //
+// GET /api/finance/receivables?unit_id=1
+// Lista contas a receber "open" ou "partial" da filial
+//
+router.get(
+    '/receivables',
+    requireAuth,
+    checkPermission('financeiro.ar_ver'),
+    async (req, res) => {
+        const unitId = Number(req.query.unit_id);
+        if (!unitId) {
+            return res.status(400).json({
+                success: false,
+                message: 'unit_id é obrigatório.',
+                data: null,
+                error: 'FIN_AR_LIST_MISSING_UNIT'
+            });
+        }
+
+        try {
+            const sql = `
+                SELECT
+                    ar.id,
+                    ar.customer_name,
+                    ar.description,
+                    ar.due_date,
+                    ar.amount_total,
+                    ar.amount_received,
+                    ar.status
+                FROM accounts_receivable ar
+                WHERE ar.unit_id = $1
+                  AND ar.status IN ('open','partial')
+                  AND ar.ativo = TRUE
+                ORDER BY ar.due_date ASC NULLS LAST, ar.id ASC
+                LIMIT 200
+            `;
+            const result = await db.query(sql, [unitId]);
+
+            const rows = result.rows.map(r => ({
+                id: r.id,
+                customer_name: r.customer_name,
+                description: r.description,
+                due_date: r.due_date,
+                amount_total: r.amount_total,
+                amount_received: r.amount_received,
+                status: r.status
+            }));
+
+            return res.json({
+                success: true,
+                message: 'Títulos a receber carregados.',
+                data: rows,
+                error: null
+            });
+
+        } catch (err) {
+            console.error('[Finance] list receivables error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Erro interno ao listar contas a receber.',
+                data: null,
+                error: err.message
+            });
+        }
+    }
+);
+
+//
 // GET /api/finance/dashboard?unit_id=1
 // -> snapshot financeiro da filial
 //
