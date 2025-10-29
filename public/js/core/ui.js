@@ -1,156 +1,109 @@
 /**
- * public/js/ui.js
- * * Funções para manipular elementos da interface do usuário (DOM).
+ * public/js/core/ui.js
+ * Responsável por interações globais de interface (sidebar, logout, highlight de menu).
+ * Compatível com o layout atual (index.html).
  */
-import { handleLogout } from './auth.js'; // Para o botão de logout
-import { showCustomModal } from './utils.js'; // Para confirmação de logout
-import { navigate } from './router.js'; // Para navegação pelos links
 
-// Referências a elementos DOM comuns (cache para performance)
-const loginScreen = document.getElementById('login-screen');
-const appContainer = document.getElementById('app');
-const contentArea = document.getElementById('content-area');
-const welcomeMessage = document.getElementById('welcome-message');
-const sidebar = document.getElementById('sidebar');
-const menuToggle = document.getElementById('menu-toggle');
-const loginMessageEl = document.getElementById('login-message'); // Elemento para mensagens de erro/sucesso no login
+import { clearCurrentUser, getCurrentUser } from './auth.js';
+import { navigate } from './router.js';
 
-/**
- * Mostra a tela de login e esconde a aplicação principal.
- */
-function showLoginScreen() {
-    if (loginScreen) {
-        loginScreen.classList.remove('hidden', 'opacity-0');
-    }
-    if (appContainer) {
-        appContainer.classList.add('hidden');
-    }
-    // Limpa a área de conteúdo principal para evitar mostrar dados antigos rapidamente
-    if (contentArea) {
-        contentArea.innerHTML = '';
-    }
-     // Limpa campos de login e mensagens
-    const usernameInput = document.getElementById('login-username');
-    const passwordInput = document.getElementById('login-password');
-    const loginButton = document.getElementById('btn-login');
-    if (usernameInput) usernameInput.value = '';
-    if (passwordInput) passwordInput.value = '';
-    if (loginMessageEl) loginMessageEl.textContent = '';
-    if (loginButton) loginButton.disabled = false; // Garante que o botão esteja habilitado
-}
+// Referências reais do layout atual
+const appWrapper   = document.getElementById('app-wrapper');
+const appContent   = document.getElementById('app-content');
+const welcomeUser  = document.getElementById('welcome-user');
+const logoutBtn    = document.getElementById('btn-logout');
+
+// (opcional futuramente: hambúrguer mobile se você criar um botão com id="menu-toggle"
+// e der um id="sidebar" pro <aside>. Por enquanto não temos esses elementos.)
+const menuToggle   = document.getElementById('menu-toggle');
+const sidebar      = document.getElementById('sidebar'); // ainda não existe no HTML atual
 
 /**
- * Mostra a aplicação principal e esconde a tela de login.
+ * Atualiza o header "Olá, Fulano".
  */
-function showAppScreen() {
-    if (appContainer) {
-        appContainer.classList.remove('hidden');
-    }
-    if (loginScreen) {
-        loginScreen.classList.add('opacity-0'); // Inicia fade-out
-        // Usa setTimeout para esconder completamente após a transição CSS
-        setTimeout(() => {
-            if (loginScreen) loginScreen.classList.add('hidden');
-        }, 300); // Deve corresponder à duração da transição no CSS (se houver)
+function renderWelcomeUser() {
+    const user = getCurrentUser();
+    if (user && welcomeUser) {
+        welcomeUser.textContent = `Olá, ${user.fullName || user.username}`;
     }
 }
 
 /**
- * Atualiza a mensagem de boas-vindas na barra superior.
- * @param {string} userName - O nome ou cargo do usuário.
+ * Destaca no sidebar o módulo atual.
  */
-function updateWelcomeMessage(userName) {
-    if (welcomeMessage) {
-        welcomeMessage.textContent = `Bem-vindo(a), ${userName}`;
+function highlightActiveModule(route) {
+    document.querySelectorAll('[data-module]').forEach(btn => {
+        btn.classList.remove('bg-gray-800', 'text-white');
+    });
+    const active = document.querySelector(`[data-module="${route}"]`);
+    if (active) {
+        active.classList.add('bg-gray-800', 'text-white');
     }
 }
 
 /**
- * Atualiza a aparência dos links da sidebar para destacar o ativo.
- * @param {string} activeRoute - A rota que deve ser destacada.
+ * Liga os cliques nos botões do menu lateral para navegar via router.
  */
-function updateSidebarActiveLink(activeRoute) {
-    if (!sidebar) return;
+function bindSidebarNavigation() {
+    document.querySelectorAll('[data-module]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const route = btn.getAttribute('data-module');
+            navigate(route);
+        });
+    });
+}
 
-    // Remove a classe ativa de todos os links primeiro
-    sidebar.querySelectorAll('li[data-route] a').forEach(link => {
-        link.classList.remove('bg-orange-600', 'text-white', 'shadow-lg');
-        // Garante que a classe de hover seja re-adicionada se não for link ativo
-        if (!link.classList.contains('menu-link')) { // Evita adicionar duplicado
-            link.classList.add('menu-link', 'hover:bg-gray-700');
+/**
+ * Liga o botão de logout.
+ * Faz logout simples (limpa sessão e volta pro login).
+ */
+function bindLogout() {
+    if (!logoutBtn) return;
+    logoutBtn.addEventListener('click', () => {
+        clearCurrentUser();
+        window.location.href = '/login.html';
+    });
+}
+
+/**
+ * (Opcional) Toggle do menu lateral em mobile.
+ * Só vai funcionar quando você der id="sidebar" pro <aside class="..."> 
+ * e adicionar um botão hambúrguer com id="menu-toggle".
+ */
+function bindMobileSidebarToggle() {
+    if (!menuToggle || !sidebar) return;
+
+    menuToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('hidden');
+
+        if (!sidebar.classList.contains('hidden')) {
+            sidebar.classList.add('absolute', 'z-40', 'h-full');
+        } else {
+            sidebar.classList.remove('absolute', 'z-40', 'h-full');
         }
     });
-
-    // Adiciona a classe ativa ao link correspondente à rota
-    const activeLink = sidebar.querySelector(`li[data-route="${activeRoute}"] a`);
-    if (activeLink) {
-        activeLink.classList.add('bg-orange-600', 'text-white', 'shadow-lg');
-        activeLink.classList.remove('menu-link', 'hover:bg-gray-700'); // Remove classes de estado normal/hover
-    }
 }
 
 /**
- * Configura os event listeners globais da UI (menu, logout, links de navegação).
+ * Inicialização geral de UI.
+ * Chame isso depois que o usuário estiver autenticado.
  */
-function setupUIEventListeners() {
-    // Menu Hamburguer (Mobile)
-    if (menuToggle && sidebar) {
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('hidden');
-            // Lógica para sobreposição em mobile
-            if (!sidebar.classList.contains('hidden')) {
-                sidebar.classList.add('absolute', 'z-40', 'h-full');
-            } else {
-                sidebar.classList.remove('absolute', 'z-40', 'h-full');
-            }
-        });
-    } else {
-        console.warn("Elemento menuToggle ou sidebar não encontrado.");
-    }
+function initUI(routeToHighlight = null) {
+    renderWelcomeUser();
+    bindSidebarNavigation();
+    bindLogout();
+    bindMobileSidebarToggle();
 
-    // Botão de Logout
-    const logoutButton = document.getElementById('logout-button');
-    if (logoutButton) {
-        logoutButton.addEventListener('click', () => {
-            showCustomModal("Sair do Sistema", "Você será desconectado. Continuar?", () => {
-                handleLogout(); // Chama a função de logout do módulo auth
-            });
-        });
-    } else {
-        console.warn("Elemento logoutButton não encontrado.");
-    }
-
-    // Links de Navegação na Sidebar
-    if (sidebar) {
-        sidebar.querySelectorAll('li[data-route]').forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                const route = item.getAttribute('data-route');
-                if (route) {
-                    navigate(route); // Chama a função de navegação do router
-                     // Fecha o menu em telas pequenas após clicar
-                    if (window.innerWidth < 768 && !sidebar.classList.contains('hidden')) {
-                        sidebar.classList.add('hidden');
-                        sidebar.classList.remove('absolute', 'z-40', 'h-full');
-                    }
-                } else {
-                    console.warn("Link da sidebar sem atributo data-route:", item);
-                }
-            });
-        });
-    } else {
-        console.warn("Elemento sidebar não encontrado para adicionar listeners de navegação.");
+    if (routeToHighlight) {
+        highlightActiveModule(routeToHighlight);
     }
 }
 
-
-// Exporta as funções e referências necessárias para outros módulos
+// Exportamos o que faz sentido hoje
 export {
-    showLoginScreen,
-    showAppScreen,
-    updateWelcomeMessage,
-    updateSidebarActiveLink,
-    setupUIEventListeners,
-    contentArea, // Exporta a referência direta para quem precisar (ex: módulos de render)
-    loginMessageEl // Exporta para auth.js poder usar
+    initUI,
+    highlightActiveModule,
+    renderWelcomeUser,
+    appWrapper,
+    appContent
 };
