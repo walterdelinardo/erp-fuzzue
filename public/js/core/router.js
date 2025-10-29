@@ -1,135 +1,147 @@
 /**
  * public/js/core/router.js
- * Responsável por:
- *  - carregar módulos dinâmicos (HTML + JS) dentro de #app-content
- *  - gerenciar navegação da sidebar via data-module="..."
- *  - atualizar UI ativa na sidebar
- *  - preencher nome do usuário logado no header lateral
- *
- * Este arquivo NÃO inicializa sozinho.
- * O main.js chama initRouter() depois que a autenticação estiver pronta.
+ * Roteador SPA: carrega módulos (HTML + JS) em /public/js/modules/<mod>/<mod>.*
+ * Integra com auth e UI (sidebar, highlight, boas-vindas).
  */
 
-import { initializeAuth, clearCurrentUser, getCurrentUser } from './auth.js';
+import { initializeAuth } from '/js/core/auth.js';
+import { initUI, highlightActiveModule, renderWelcomeUser } from '/js/core/ui.js';
 
-const appWrapper  = document.getElementById('app-wrapper');
-const appContent  = document.getElementById('app-content');
-const welcomeUser = document.getElementById('welcome-user');
-const logoutBtn   = document.getElementById('btn-logout');
+const appContent = document.getElementById('app-content');
+
+// Controle de navegação para evitar recarregar o mesmo módulo
+let currentModule = null;
+
+// Conjunto de módulos válidos (fallback para 'dashboard' caso hash seja inválido)
+const ALLOWED_MODULES = new Set([
+  'dashboard',
+  'products',
+  'suppliers',
+  'inventory',
+  'purchase',
+  'sales',
+  'pdv',
+  'finance',
+  'payables',
+  'receivables',
+  'finance_consolidado'
+]);
 
 /**
- * Carrega um módulo específico:
- * - Busca o HTML /js/modules/<mod>/<mod>.html
- * - Injeta no #app-content
- * - Importa o JS /js/modules/<mod>/<mod>.js
- * - Se o módulo exportar initPage(), chamamos
+ * Carrega o HTML e o JS de um módulo e inicializa a página.
+ * Estrutura esperada:
+ *   /public/js/modules/<module>/<module>.html
+ *   /public/js/modules/<module>/<module>.js (exporta initPage opcional)
  */
 async function loadModule(moduleName) {
+  try {
+    // Skeleton loading simples
+    if (appContent) {
+      appContent.innerHTML = `
+        <div class="p-6 animate-pulse">
+          <div class="h-4 w-24 bg-gray-200 rounded mb-4"></div>
+          <div class="h-3 w-full bg-gray-200 rounded mb-2"></div>
+          <div class="h-3 w-5/6 bg-gray-200 rounded"></div>
+        </div>
+      `;
+    }
+
+    // 1) HTML
+    const htmlRes = await fetch(`/js/modules/${moduleName}/${moduleName}.html`, { cache: 'no-store' });
+    if (!htmlRes.ok) {
+      throw new Error(`Falha ao carregar HTML do módulo "${moduleName}" (${htmlRes.status})`);
+    }
+    const html = await htmlRes.text();
+    if (appContent) appContent.innerHTML = html;
+
+    // 2) JS (dinâmico)
+    let mod = null;
     try {
-        // Carrega HTML
-        const htmlRes = await fetch(`/js/modules/${moduleName}/${moduleName}.html`);
-        if (!htmlRes.ok) {
-            console.error(`Erro carregando HTML do módulo ${moduleName}:`, htmlRes.status);
-            appContent.innerHTML = `
-                <div class="p-4 bg-red-100 text-red-700 rounded">
-                    Falha ao carregar módulo <b>${moduleName}</b> (${htmlRes.status}).
-                </div>`;
-            return;
-        }
-
-        const html = await htmlRes.text();
-        appContent.innerHTML = html;
-
-        // Importa o JS do módulo dinamicamente
-        const mod = await import(`/js/modules/${moduleName}/${moduleName}.js`);
-
-        // Se o módulo definir initPage(), chamamos
-        if (mod && typeof mod.initPage === 'function') {
-            mod.initPage();
-        }
-
-    } catch (err) {
-        console.error(`Erro fatal ao carregar módulo ${moduleName}:`, err);
-        appContent.innerHTML = `
-            <div class="p-4 bg-red-100 text-red-700 rounded">
-                Erro interno ao carregar módulo <b>${moduleName}</b>.
-            </div>`;
-    }
-}
-
-/**
- * Destaca o botão ativo na sidebar.
- */
-function highlightSidebar(route) {
-    document.querySelectorAll('[data-module]').forEach(btn => {
-        btn.classList.remove('bg-gray-800', 'text-white');
-    });
-    const active = document.querySelector(`[data-module="${route}"]`);
-    if (active) {
-        active.classList.add('bg-gray-800', 'text-white');
-    }
-}
-
-/**
- * Faz navegação para um módulo (atualiza sidebar + carrega o módulo)
- */
-function navigate(route) {
-    highlightSidebar(route);
-    loadModule(route);
-}
-
-/**
- * Associa cliques da sidebar aos módulos
- */
-function bindSidebar() {
-    document.querySelectorAll('[data-module]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const route = btn.getAttribute('data-module');
-            navigate(route);
-        });
-    });
-}
-
-/**
- * Configura botão de logout
- */
-function bindLogout() {
-    if (!logoutBtn) return;
-    logoutBtn.addEventListener('click', () => {
-        clearCurrentUser();
-        window.location.href = '/login.html';
-    });
-}
-
-/**
- * Inicializa a camada de navegação após a autenticação.
- * - Garante que o usuário está autenticado
- * - Mostra o wrapper principal (#app-wrapper)
- * - Injeta nome do usuário logado
- * - Liga eventos de navegação
- * - Carrega o primeiro módulo ("dashboard" por padrão)
- */
-async function initRouter() {
-    // garante estado de auth e visibilidade do app
-    await initializeAuth();
-
-    // Preenche nome do usuário logado na sidebar
-    const user = getCurrentUser();
-    if (user && welcomeUser) {
-        welcomeUser.textContent = `Olá, ${user.fullName || user.username || ''}`;
+      mod = await import(`/js/modules/${moduleName}/${moduleName}.js?t=${Date.now()}`);
+    } catch (e) {
+      console.warn(`[Router] JS do módulo "${moduleName}" ausente ou com erro.`, e);
     }
 
-    // Garante que o app wrapper aparece
-    if (appWrapper) {
-        appWrapper.classList.remove('hidden');
+    // 3) initPage opcional
+    if (mod && typeof mod.initPage === 'function') {
+      try {
+        await mod.initPage();
+      } catch (e) {
+        console.error(`[Router] Erro ao executar initPage() do módulo ${moduleName}:`, e);
+      }
     }
-
-    // Liga eventos
-    bindSidebar();
-    bindLogout();
-
-    // Carrega o primeiro módulo visível
-    navigate('dashboard'); // ou 'pdv' se você quiser abrir direto o caixa
+  } catch (err) {
+    console.error('[Router] loadModule error:', err);
+    if (appContent) {
+      appContent.innerHTML = `
+        <div class="p-4 bg-red-50 border border-red-200 text-red-700 rounded">
+          <div class="font-semibold mb-1">Erro ao carregar módulo <b>${moduleName}</b>.</div>
+          <div class="text-sm">${err.message || 'Erro desconhecido.'}</div>
+        </div>
+      `;
+    }
+  }
 }
 
-export { initRouter, navigate, loadModule };
+/**
+ * Destaca o item ativo no sidebar e carrega o módulo.
+ * Também atualiza o hash da URL (#<module>) para permitir refresh direto.
+ * Evita recarregar quando já estamos no mesmo módulo.
+ */
+function navigate(moduleName) {
+  if (!moduleName) return;
+
+  // Fallback caso navegue para algo inválido
+  if (!ALLOWED_MODULES.has(moduleName)) {
+    moduleName = 'dashboard';
+  }
+
+  // Evita navegação duplicada
+  if (moduleName === currentModule) return;
+  currentModule = moduleName;
+
+  // Highlight + conteúdo
+  highlightActiveModule(moduleName);
+  loadModule(moduleName);
+
+  // Atualiza hash sem navegar de fato
+  if (location.hash !== `#${moduleName}`) {
+    history.replaceState(null, '', `#${moduleName}`);
+  }
+}
+
+/**
+ * Obtém a rota inicial:
+ *  - do hash (#<module>) se houver e for válido
+ *  - senão, usa "dashboard" por padrão
+ */
+function getInitialRoute() {
+  const hash = (location.hash || '').replace('#', '').trim();
+  return ALLOWED_MODULES.has(hash) ? hash : 'dashboard';
+}
+
+/**
+ * Boot do app:
+ * 1) Garante autenticação (redireciona para /login.html se não autenticado)
+ * 2) Inicializa UI global (listeners, boas-vindas)
+ * 3) Navega para a rota inicial (hash ou dashboard)
+ */
+(async () => {
+  await initializeAuth(); // redireciona para /login.html se não houver sessão
+
+  // usuário autenticado — pinta header e liga UI global
+  renderWelcomeUser();
+  initUI();
+
+  // rota inicial (suporta abrir direto via #modulo)
+  const initialRoute = getInitialRoute();
+  navigate(initialRoute);
+
+  // reage a mudanças de hash (ex.: usuário troca manualmente)
+  window.addEventListener('hashchange', () => {
+    const route = getInitialRoute();
+    navigate(route);
+  });
+})();
+
+export { navigate, loadModule };
