@@ -142,6 +142,26 @@ async function authedFetch(url, options = {}) {
     });
 }
 
+// ==== FETCH autenticado (stub) ====
+// Hoje não usamos token; quando o JWT entrar, este wrapper já estará pronto.
+async function authedFetch(url, options = {}) {
+  const res = await fetch(url, options);
+
+  // Se quiser, redirecione para login em 401/403:
+  if (res.status === 401 || res.status === 403) {
+    // clearCurrentUser();
+    // window.location.href = '/login.html';
+  }
+
+  return res;
+}
+
+// (não remova os exports existentes)
+export {
+  authedFetch
+};
+
+
 export {
     initializeAuth,
     attemptLogin,
