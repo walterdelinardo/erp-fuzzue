@@ -1,0 +1,116 @@
+<div class="space-y-6">
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+        <i class="fa-solid fa-money-bill-transfer text-red-600"></i>
+        Contas a Pagar
+      </h1>
+      <p class="text-sm text-gray-500">
+        Títulos em aberto por filial e baixa de pagamento.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2 text-sm">
+      <label class="text-gray-600 font-medium">Filial:</label>
+      <input
+        id="payables-unit-id"
+        class="border border-gray-300 rounded px-2 py-1 w-28 text-center"
+        placeholder="ex: 1"
+      />
+      <button
+        id="payables-load-btn"
+        class="bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-2 rounded"
+      >
+        Carregar
+      </button>
+    </div>
+  </div>
+
+  <div id="payables-status" class="text-xs text-gray-500"></div>
+
+  <div class="overflow-x-auto border border-gray-200 rounded-lg bg-white text-sm">
+    <table class="min-w-full">
+      <thead class="bg-gray-100 text-gray-700 text-xs uppercase tracking-wide">
+        <tr>
+          <th class="px-3 py-2 text-left font-medium">ID</th>
+          <th class="px-3 py-2 text-left font-medium">Descrição</th>
+          <th class="px-3 py-2 text-left font-medium">Vencimento</th>
+          <th class="px-3 py-2 text-right font-medium">Total</th>
+          <th class="px-3 py-2 text-right font-medium">Pago</th>
+          <th class="px-3 py-2 text-left font-medium">Status</th>
+          <th class="px-3 py-2 text-center font-medium w-24">Ação</th>
+        </tr>
+      </thead>
+      <tbody id="payables-table-body" class="divide-y divide-gray-200">
+        <!-- via JS -->
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- Modal Baixa -->
+<div id="payables-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-lg w-full max-w-sm p-4 text-sm">
+    <div class="flex items-start justify-between mb-3">
+      <div class="font-semibold text-gray-800">
+        Baixar Título <span id="payables-modal-id-label" class="text-gray-500 text-xs"></span>
+      </div>
+      <button id="payables-close-modal" class="text-gray-400 hover:text-gray-600">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form id="payables-form" class="space-y-3">
+      <input type="hidden" id="payables-current-id">
+
+      <div>
+        <label class="block text-gray-600 text-xs mb-1">Valor a pagar agora (R$)</label>
+        <input
+          id="payables-valor"
+          type="number"
+          step="0.01"
+          min="0"
+          class="w-full border rounded px-2 py-1 text-right"
+          required
+        />
+      </div>
+
+      <div>
+        <label class="block text-gray-600 text-xs mb-1">Conta/Caixa (cash_account_id)</label>
+        <input
+          id="payables-conta"
+          class="w-full border rounded px-2 py-1 text-right"
+          placeholder="ex: 2"
+          required
+        />
+        <p class="text-[10px] text-gray-400 mt-1">No futuro isso vira um select com nome da conta/banco.</p>
+      </div>
+
+      <div>
+        <label class="block text-gray-600 text-xs mb-1">Descrição do movimento</label>
+        <input
+          id="payables-desc"
+          class="w-full border rounded px-2 py-1"
+          placeholder="Pagamento fornecedor X"
+        />
+      </div>
+
+      <div>
+        <label class="block text-gray-600 text-xs mb-1">Meio de pagamento</label>
+        <input
+          id="payables-metodo"
+          class="w-full border rounded px-2 py-1"
+          placeholder="pix / transferencia / dinheiro"
+        />
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button class="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-3 py-2 rounded-lg">
+          Confirmar Baixa
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -190,3 +190,40 @@ INSERT INTO roles_permissions (role, permissao) VALUES
 ('admin', 'fornecedores.editar'),
 ('admin', 'ordens_compra.ver'),
 ('admin', 'ordens_compra.criar');
+
+-- PERFIL: financeiro
+-- Pode operar contas a pagar / receber, ver saldos de cada filial
+INSERT INTO roles_permissions (role, permissao) VALUES
+('financeiro', 'financeiro.ver'),
+('financeiro', 'financeiro.ap_ver'),            -- contas a pagar - ver
+('financeiro', 'financeiro.ap_editar'),         -- marcar paga, editar vencimento
+('financeiro', 'financeiro.ar_ver'),            -- contas a receber - ver
+('financeiro', 'financeiro.ar_editar'),         -- marcar recebido, renegociar
+('financeiro', 'financeiro.caixa_ver'),         -- ver cash_movements
+('financeiro', 'financeiro.caixa_lancar'),      -- lançar movimento manual
+('financeiro', 'financeiro.rateio_ver'),
+('financeiro', 'financeiro.rateio_editar');
+
+-- PERFIL: diretor
+-- Pode ver tudo (todas filiais), mas não necessariamente lançar
+INSERT INTO roles_permissions (role, permissao) VALUES
+('diretoria', 'financeiro.ver'),
+('diretoria', 'financeiro.relatorios_gerenciais'),
+('diretoria', 'financeiro.cashflow_forecast'),
+('diretoria', 'financeiro.multifilial_visao_global');
+
+-- PERFIL: admin
+-- Full access explícito
+INSERT INTO roles_permissions (role, permissao) VALUES
+('admin', 'financeiro.ver'),
+('admin', 'financeiro.ap_ver'),
+('admin', 'financeiro.ap_editar'),
+('admin', 'financeiro.ar_ver'),
+('admin', 'financeiro.ar_editar'),
+('admin', 'financeiro.caixa_ver'),
+('admin', 'financeiro.caixa_lancar'),
+('admin', 'financeiro.rateio_ver'),
+('admin', 'financeiro.rateio_editar'),
+('admin', 'financeiro.relatorios_gerenciais'),
+('admin', 'financeiro.cashflow_forecast'),
+('admin', 'financeiro.multifilial_visao_global');

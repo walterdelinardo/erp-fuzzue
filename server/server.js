@@ -12,8 +12,10 @@ const path = require('path');
 const apiRoutes = require('./modules');                 // /server/modules/index.js (rotas gerais da API)
 const authRoutes = require('./modules/auth');           // /server/modules/auth.js (login, logout, sessão)
 const pdvRoutes = require('./modules/pdv');             // /server/modules/pdv.js (módulo PDV)
+const productsRoutes = require('./modules/products');   // /server/modules/products.js (módulo Produtos)
 const suppliersRoutes = require('./modules/suppliers'); // /server/modules/suppliers.js (módulo Fornecedores)
-const purchaseRoutes  = require('./modules/purchase');  // /server/modules/suppliers.js (módulo ordens de compra)
+const purchaseRoutes  = require('./modules/purchase');  // /server/modules/purchase.js (módulo ordens de compra)
+const financeRoutes = require('./modules/finance');     // /server/modules/finance.js (módulo financeiro)
 
 const app = express();
 const PORT = process.env.PORT || 40011;
@@ -51,5 +53,7 @@ app.listen(PORT, () => {
     console.log(`🚀 Servidor Fuzzue rodando na porta ${PORT}`);
 });
 
+app.use('/api/products', productsRoutes);
 app.use('/api/suppliers', suppliersRoutes);
 app.use('/api/purchase', purchaseRoutes);
+app.use('/api/finance', financeRoutes);

@@ -1,0 +1,55 @@
+<div class="space-y-6">
+
+  <!-- Header / seleção de filial -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+        <i class="fa-solid fa-sack-dollar text-green-600"></i>
+        Financeiro
+      </h1>
+      <p class="text-sm text-gray-500">
+        Visão consolidada por filial: saldos, pagar, receber.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2 text-sm">
+      <label class="text-gray-600 font-medium">Filial:</label>
+      <input
+        id="finance-unit-id"
+        class="border border-gray-300 rounded px-2 py-1 w-28 text-center"
+        placeholder="ex: 1"
+      />
+      <button
+        id="finance-load-btn"
+        class="bg-green-600 hover:bg-green-700 text-white font-semibold px-3 py-2 rounded"
+      >
+        Carregar
+      </button>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div id="finance-status" class="text-xs text-gray-500"></div>
+
+  <!-- Cards Resumo -->
+  <div id="finance-summary" class="grid gap-4 md:grid-cols-3">
+    <!-- preenchido via JS -->
+  </div>
+
+  <!-- Contas da Filial -->
+  <div class="border border-gray-200 rounded-lg bg-white text-sm overflow-x-auto">
+    <table class="min-w-full">
+      <thead class="bg-gray-100 text-gray-700 text-xs uppercase tracking-wide">
+        <tr>
+          <th class="px-3 py-2 text-left font-medium">Conta / Carteira</th>
+          <th class="px-3 py-2 text-left font-medium">Tipo</th>
+          <th class="px-3 py-2 text-right font-medium">Saldo Atual</th>
+        </tr>
+      </thead>
+      <tbody id="finance-accounts-body" class="divide-y divide-gray-200">
+        <!-- via JS -->
+      </tbody>
+    </table>
+  </div>
+
+</div>
