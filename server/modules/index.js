@@ -24,8 +24,8 @@ const pdvRoutes = require('./pdv');
 // Se você ainda usa essa rota antiga "produtos.js", mantém.
 // Se NÃO usa mais (products.js já substituiu), pode remover essas 2 linhas.
 try {
-    const produtosRoutes = require('./produtos');
-    router.use('/produtos', produtosRoutes);
+    const produtosRoutes = require('./products');
+    router.use('/products', produtosRoutes);
 } catch (err) {
     // Se não existir ./produtos.js, ignoramos silenciosamente.
     // Isso evita travar o servidor.
