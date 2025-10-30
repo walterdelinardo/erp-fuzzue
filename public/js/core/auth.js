@@ -1,174 +1,158 @@
 // public/js/core/auth.js
 // Camada de autenticação / sessão do ERP Fuzzue (frontend).
-// - Faz login e salva { user, token } no sessionStorage
-// - Valida sessão ao carregar app
-// - Fornece helpers para fazer fetch autenticado
 
 const SESSION_KEY = 'fuzzue_user';
-const TOKEN_KEY = 'fuzzue_token';
+const TOKEN_KEY   = 'fuzzue_token';
 
-// Lê o usuário logado salvo
+// ---------- sessão ----------
 function getCurrentUser() {
-    const raw = sessionStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
-    try {
-        return JSON.parse(raw);
-    } catch {
-        return null;
-    }
+  const raw = sessionStorage.getItem(SESSION_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
 }
 
-// Salva user
 function setCurrentUser(user) {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
 }
 
-// Lê token JWT
 function getToken() {
-    return sessionStorage.getItem(TOKEN_KEY) || null;
+  return sessionStorage.getItem(TOKEN_KEY) || null;
 }
 
-// Salva token JWT
 function setToken(token) {
-    sessionStorage.setItem(TOKEN_KEY, token);
+  sessionStorage.setItem(TOKEN_KEY, token);
 }
 
-// Limpa sessão (logout)
 function clearCurrentUser() {
-    sessionStorage.removeItem(SESSION_KEY);
-    sessionStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
 }
 
+// ---------- login ----------
 /**
  * Faz login na API:
- * - POST /api/auth/login
- * - Espera retorno no formato padrão:
- *
+ * backend atual responde assim:
  * {
  *   success: true,
- *   data: {
- *     user: { id, username, fullName, role },
- *     token: "JWT..."
- *   }
+ *   message: 'Login bem-sucedido!',
+ *   user: { ... }
  * }
  *
- * Se ok:
- *   - salva user e token
- *   - redireciona para /index.html
+ * então aqui tratamos os 2 formatos:
+ * - formato novo (com data.user / data.token)
+ * - formato atual (com user direto na raiz)
  */
 async function attemptLogin(username, password) {
-    const resp = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-    });
+  const resp = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  });
 
-    let data;
-    try {
-        data = await resp.json();
-    } catch (e) {
-        throw new Error('Resposta inválida do servidor de autenticação.');
-    }
+  let data;
+  try {
+    data = await resp.json();
+  } catch (e) {
+    throw new Error('Resposta inválida do servidor de autenticação.');
+  }
 
-    if (!resp.ok || !data.success) {
-        throw new Error(
-            data?.message ||
-            data?.error ||
-            'Falha na autenticação.'
-        );
-    }
+  if (!resp.ok || data.success === false) {
+    throw new Error(
+      data?.message ||
+      data?.error ||
+      'Falha na autenticação.'
+    );
+  }
 
-    // Esperamos data.data.user e data.data.token
-    const safeUser = data.data?.user;
-    const token = data.data?.token;
+  // tenta ler nos dois formatos
+  const userFromNewFormat = data?.data?.user;
+  const tokenFromNewFormat = data?.data?.token;
+  const userFromOldFormat = data?.user;
 
-    if (!safeUser || !token) {
-        throw new Error('Resposta de login incompleta.');
-    }
+  const userToSave = userFromNewFormat || userFromOldFormat;
+  const tokenToSave = tokenFromNewFormat || null;
 
-    // salva sessão
-    setCurrentUser(safeUser);
-    setToken(token);
+  if (!userToSave) {
+    throw new Error('Resposta de login não contém usuário.');
+  }
 
-    // vai para app principal
-    window.location.href = '/index.html';
+  setCurrentUser(userToSave);
+
+  // se o backend um dia passar a devolver token, já salvamos
+  if (tokenToSave) {
+    setToken(tokenToSave);
+  }
+
+  // vai pro app
+  window.location.href = '/index.html';
 }
 
+// ---------- init ----------
 /**
  * Garante que o usuário está autenticado:
- * - Se não houver user/token, manda pra /login.html
+ * - Se não houver user, manda pra /login.html
  * - Se houver, mostra a UI principal
  */
 async function initializeAuth() {
-    const user = getCurrentUser();
-    const token = getToken();
-    const appWrapper = document.getElementById('app-wrapper');
+  const user  = getCurrentUser();
+  const token = getToken(); // pode ser null
 
-    if (!user || !token) {
-        window.location.href = '/login.html';
-        return;
-    }
+  const appWrapper = document.getElementById('app-wrapper');
 
-    if (appWrapper) {
-        appWrapper.classList.remove('hidden');
-    }
+  if (!user) {
+    window.location.href = '/login.html';
+    return;
+  }
+
+  if (appWrapper) {
+    appWrapper.classList.remove('hidden');
+  }
 }
 
+// ---------- fetch autenticado ----------
 /**
- * Helper para fazer requisições autenticadas para a API.
- * Já injeta Authorization: Bearer <token>.
- *
- * Exemplo de uso:
- *
- *   const resp = await authedFetch('/api/pdv/finalizar-venda', {
- *     method: 'POST',
- *     body: JSON.stringify(payload),
- *     headers: { 'Content-Type': 'application/json' }
- *   });
- *
- *   const data = await resp.json();
+ * Wrapper de fetch.
+ * - Se tivermos token salvo, manda Authorization: Bearer <token>
+ * - Se não tivermos, faz fetch normal
+ * - Se vier 401/403, podemos redirecionar (comentado por enquanto)
  */
 async function authedFetch(url, options = {}) {
-    const token = getToken();
+  const token = getToken();
 
-    const headers = {
-        ...(options.headers || {}),
-        'Authorization': `Bearer ${token}`
-    };
+  const headers = {
+    ...(options.headers || {})
+  };
 
-    return fetch(url, {
-        ...options,
-        headers
-    });
-}
-
-// ==== FETCH autenticado (stub) ====
-// Hoje não usamos token; quando o JWT entrar, este wrapper já estará pronto.
-async function authedFetch(url, options = {}) {
-  const res = await fetch(url, options);
-
-  // Se quiser, redirecione para login em 401/403:
-  if (res.status === 401 || res.status === 403) {
-    // clearCurrentUser();
-    // window.location.href = '/login.html';
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
+
+  const res = await fetch(url, {
+    ...options,
+    headers
+  });
+
+  // se quiser forçar logout:
+  // if (res.status === 401 || res.status === 403) {
+  //   clearCurrentUser();
+  //   window.location.href = '/login.html';
+  // }
 
   return res;
 }
 
-// (não remova os exports existentes)
+// ---------- exports ----------
 export {
-  authedFetch
-};
-
-
-export {
-    initializeAuth,
-    attemptLogin,
-    getCurrentUser,
-    getToken,
-    setCurrentUser,
-    setToken,
-    clearCurrentUser,
-    authedFetch
+  initializeAuth,
+  attemptLogin,
+  getCurrentUser,
+  getToken,
+  setCurrentUser,
+  setToken,
+  clearCurrentUser,
+  authedFetch,
 };
