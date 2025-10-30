@@ -1,4 +1,3 @@
-@ -1,147 +1,167 @@
 // public/js/core/auth.js
 // Camada de autenticação / sessão do ERP Fuzzue (frontend).
 // - Faz login e salva { user, token } no sessionStorage
@@ -147,6 +146,9 @@ export {
     initializeAuth,
     attemptLogin,
     getCurrentUser,
+    getToken,
+    setCurrentUser,
+    setToken,
     clearCurrentUser,
     authedFetch
 };
