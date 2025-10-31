@@ -43,6 +43,11 @@ console.log("Registrando arquivos estáticos de /public");
 app.use(express.static(path.resolve(__dirname, '../public')));
 
 // 5. Catch-all: envia index.html para qualquer rota não tratada (SPA)
+app.use('/api/products', productsRoutes);
+app.use('/api/suppliers', suppliersRoutes);
+app.use('/api/purchase', purchaseRoutes);
+app.use('/api/finance', financeRoutes);
+
 app.get('*', (req, res) => {
     console.log(`Catch-all: Servindo index.html para a rota: ${req.path}`);
     res.sendFile(path.resolve(__dirname, '../public/index.html'));

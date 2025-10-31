@@ -40,11 +40,10 @@ async function userHasPermission(role, permission) {
 }
 
 /**
- * [FUTURO] Extrai informações do usuário autenticado a partir do token (JWT, sessão etc.)
- * No momento, ainda não temos JWT implementado.
+ * Extrai informações do usuário autenticado a partir do token (JWT, sessão etc.)
  *
- * Hoje retornaremos um objeto mínimo baseado em header manual, apenas para
- * desenvolvimento/validação de permissão em endpoints protegidos.
+ * A informação do usuário (req.user) já deve ter sido injetada pelo middleware requireAuth.
+ * Esta função é apenas um fallback ou um helper para extrair o contexto.
  *
  * @param {object} req - Express Request
  *
@@ -56,25 +55,33 @@ async function userHasPermission(role, permission) {
  *  }
  */
 function getRequestUserContext(req) {
-    // Modo DEV atual:
-    // Aceita cabeçalho `x-user-role` para simular o papel do usuário.
-    // Exemplo de requisição no front/fetch:
-    // fetch('/api/pdv/finalizar-venda', { headers: { 'x-user-role': 'pdv', ... } })
-    //
-    // IMPORTANTE:
-    // Isso NÃO é seguro e NÃO deve ir para produção final sem JWT.
+    // A informação do usuário (req.user) já deve ter sido injetada pelo middleware requireAuth.
+    // O middleware checkPermission foi modificado para usar diretamente req.user.
+    // Esta função não deve mais ser usada pelo checkPermission.
+    // Mantida apenas para compatibilidade ou uso futuro.
 
-    const simulatedRole = req.headers['x-user-role'];
-
-    if (!simulatedRole) {
-        return null;
+    if (req.user && req.user.role) {
+        return {
+            id: req.user.id,
+            role: req.user.role,
+            username: req.user.username,
+            fullName: req.user.fullName
+        };
     }
 
-    return {
-        id: null,           // ainda não temos ID amarrado ao token/cabeçalho
-        role: simulatedRole,
-        username: null
-    };
+    // Fallback para simulação em desenvolvimento (DEVE SER REMOVIDO EM PRODUÇÃO)
+    const simulatedRole = req.headers['x-user-role'];
+    if (simulatedRole) {
+        console.warn("[AuthUtils] Usando simulação de role via header 'x-user-role'.");
+        return {
+            id: null,
+            role: simulatedRole,
+            username: null,
+            fullName: 'Usuário Simulado'
+        };
+    }
+
+    return null;
 }
 
 module.exports = {
