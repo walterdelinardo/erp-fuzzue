@@ -107,51 +107,134 @@
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
-      <form id="product-form" class="grid grid-cols-2 gap-4" data-mode="create">
+      <form id="product-form" class="space-y-4" data-mode="create">
         <input type="hidden" id="prod-id">
-        <div class="col-span-2">
-          <label class="block text-gray-600 text-xs mb-1">Nome</label>
-          <input id="prod-name" class="w-full border rounded px-2 py-1" required>
+
+        <!-- Seção: Identificação -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
+          <div class="md:col-span-2">
+            <label class="block text-gray-600 text-xs mb-1">Nome do Produto</label>
+            <input id="prod-name" class="w-full border rounded px-2 py-1" required>
+          </div>
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">SKU (Ref)</label>
+            <input id="prod-sku" class="w-full border rounded px-2 py-1">
+          </div>
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">Código de Barras (EAN)</label>
+            <input id="prod-barcode" class="w-full border rounded px-2 py-1">
+          </div>
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">Categoria</label>
+            <input id="prod-category" class="w-full border rounded px-2 py-1">
+          </div>
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">Subcategoria</label>
+            <input id="prod-subcategory" class="w-full border rounded px-2 py-1">
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-gray-600 text-xs mb-1">Tipo de Produto</label>
+            <select id="prod-product-type" class="w-full border rounded px-2 py-1 bg-white">
+              <option value="fisico">Físico</option>
+              <option value="servico">Serviço</option>
+              <option value="kit">Kit</option>
+              <option value="materia_prima">Matéria-Prima</option>
+            </select>
+          </div>
         </div>
-        <div>
-          <label class="block text-gray-600 text-xs mb-1">SKU</label>
-          <input id="prod-sku" class="w-full border rounded px-2 py-1">
+
+        <!-- Seção: Fiscal -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 border-b pb-4">
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">NCM</label>
+            <input id="prod-ncm" class="w-full border rounded px-2 py-1">
+          </div>
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">CFOP</label>
+            <input id="prod-cfop" class="w-full border rounded px-2 py-1">
+          </div>
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">CST</label>
+            <input id="prod-cst" class="w-full border rounded px-2 py-1">
+          </div>
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">CSOSN</label>
+            <input id="prod-csosn" class="w-full border rounded px-2 py-1">
+          </div>
         </div>
-        <div>
-          <label class="block text-gray-600 text-xs mb-1">NCM</label>
-          <input id="prod-ncm" class="w-full border rounded px-2 py-1">
+
+        <!-- Seção: Preços e Estoque -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 border-b pb-4">
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">Unidade</label>
+            <input id="prod-unit" class="w-full border rounded px-2 py-1" placeholder="un, kg, m...">
+          </div>
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">Custo (R$)</label>
+            <input id="prod-cost" type="number" step="0.01" class="w-full border rounded px-2 py-1">
+          </div>
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">Margem Lucro (%)</label>
+            <input id="prod-profit-margin" type="number" step="0.01" class="w-full border rounded px-2 py-1">
+          </div>
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">Preço Venda (R$)</label>
+            <input id="prod-price" type="number" step="0.01" class="w-full border rounded px-2 py-1">
+          </div>
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">Estoque Atual</label>
+            <input id="prod-stock" type="number" step="0.001" class="w-full border rounded px-2 py-1">
+          </div>
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">Estoque Mínimo</label>
+            <input id="prod-min-stock" type="number" step="0.001" class="w-full border rounded px-2 py-1">
+          </div>
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">Localização</label>
+            <input id="prod-location" class="w-full border rounded px-2 py-1" placeholder="Corredor A, Prateleira 3">
+          </div>
         </div>
-        <div>
-          <label class="block text-gray-600 text-xs mb-1">Unidade</label>
-          <input id="prod-unit" class="w-full border rounded px-2 py-1" placeholder="un, kg, m...">
+
+        <!-- Seção: Logística -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 border-b pb-4">
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">Peso (kg)</label>
+            <input id="prod-weight" type="number" step="0.001" class="w-full border rounded px-2 py-1">
+          </div>
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">Altura (cm)</label>
+            <input id="prod-height" type="number" step="0.01" class="w-full border rounded px-2 py-1">
+          </div>
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">Largura (cm)</label>
+            <input id="prod-width" type="number" step="0.01" class="w-full border rounded px-2 py-1">
+          </div>
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">Profundidade (cm)</label>
+            <input id="prod-depth" type="number" step="0.01" class="w-full border rounded px-2 py-1">
+          </div>
         </div>
-        <div>
-          <label class="block text-gray-600 text-xs mb-1">Categoria</label>
-          <input id="prod-category" class="w-full border rounded px-2 py-1">
+
+        <!-- Seção: Outros -->
+        <div class="grid grid-cols-1 gap-4">
+          <div class="col-span-2">
+            <label class="block text-gray-600 text-xs mb-1">Descrição</label>
+            <textarea id="prod-description" class="w-full border rounded px-2 py-1" rows="2"></textarea>
+          </div>
+          <div class="col-span-2">
+            <label class="block text-gray-600 text-xs mb-1">Observações</label>
+            <textarea id="prod-observations" class="w-full border rounded px-2 py-1" rows="2"></textarea>
+          </div>
+          <div>
+            <label class="block text-gray-600 text-xs mb-1">Fornecedor (ID)</label>
+            <input id="prod-supplier" class="w-full border rounded px-2 py-1" placeholder="ex: 3">
+          </div>
         </div>
-        <div class="col-span-2">
-          <label class="block text-gray-600 text-xs mb-1">Descrição</label>
-          <input id="prod-description" class="w-full border rounded px-2 py-1">
-        </div>
-        <div>
-          <label class="block text-gray-600 text-xs mb-1">Custo (R$)</label>
-          <input id="prod-cost" type="number" step="0.01" class="w-full border rounded px-2 py-1">
-        </div>
-        <div>
-          <label class="block text-gray-600 text-xs mb-1">Preço Venda (R$)</label>
-          <input id="prod-price" type="number" step="0.01" class="w-full border rounded px-2 py-1">
-        </div>
-        <div>
-          <label class="block text-gray-600 text-xs mb-1">Estoque Inicial</label>
-          <input id="prod-stock" type="number" step="0.001" class="w-full border rounded px-2 py-1">
-        </div>
-        <div>
-          <label class="block text-gray-600 text-xs mb-1">Fornecedor (ID)</label>
-          <input id="prod-supplier" class="w-full border rounded px-2 py-1" placeholder="ex: 3">
-        </div>
-        <div class="col-span-2 flex justify-end mt-2">
-          <button class="bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium px-3 py-2 rounded-lg">
-            Salvar
+
+        <!-- Botão Salvar -->
+        <div class="col-span-2 flex justify-end mt-4">
+          <button class="bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
+            Salvar Produto
           </button>
         </div>
       </form>

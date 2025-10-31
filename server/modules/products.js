@@ -28,11 +28,24 @@ function mapProductRow(row) {
         name: row.name,
         description: row.description,
         category: row.category,
+        subcategory: row.subcategory, // NOVO
+        product_type: row.product_type, // NOVO
         ncm: row.ncm,
+        cst: row.cst, // NOVO
+        csosn: row.csosn, // NOVO
+        cfop: row.cfop, // NOVO
         unit: row.unit,
         cost_price: row.cost_price,
         sale_price: row.sale_price,
+        profit_margin: row.profit_margin, // NOVO
         stock: row.stock,
+        min_stock: row.min_stock, // NOVO
+        location: row.location, // NOVO
+        weight: row.weight, // NOVO
+        height: row.height, // NOVO
+        width: row.width, // NOVO
+        depth: row.depth, // NOVO
+        observations: row.observations, // NOVO
         supplier_id: row.supplier_id,
         ativo: row.ativo,
         data_criacao: row.data_criacao,
@@ -52,9 +65,11 @@ router.get(
         try {
             const sql = `
                 SELECT
-                    id, sku, barcode, name, description, category, ncm, unit,
-                    cost_price, sale_price, stock, supplier_id,
-                    data_criacao, data_atualizacao, ativo
+                    id, sku, barcode, name, description, category, subcategory, product_type,
+                    ncm, cst, csosn, cfop, unit,
+                    cost_price, sale_price, profit_margin, stock, min_stock,
+                    location, weight, height, width, depth, observations,
+                    supplier_id, data_criacao, data_atualizacao, ativo
                 FROM products
                 WHERE ativo = TRUE
                 ORDER BY name ASC
@@ -113,11 +128,24 @@ router.post(
             name,
             description,
             category,
+            subcategory,
+            product_type,
             ncm,
+            cst,
+            csosn,
+            cfop,
             unit,
             cost_price,
             sale_price,
+            profit_margin,
             stock,
+            min_stock,
+            location,
+            weight,
+            height,
+            width,
+            depth,
+            observations,
             supplier_id
         } = req.body;
 
@@ -130,15 +158,46 @@ router.post(
             });
         }
 
+        // 1. Prevenção de Duplicidade (SKU e Barcode)
+        if (sku) {
+            const checkSku = await db.query('SELECT id FROM products WHERE sku = $1 AND ativo = TRUE', [sku]);
+            if (checkSku.rowCount > 0) {
+                return res.status(409).json({
+                    success: false,
+                    message: `SKU '${sku}' já cadastrado.`,
+                    data: null,
+                    error: 'PROD_DUPLICATE_SKU'
+                });
+            }
+        }
+
+        if (barcode) {
+            const checkBarcode = await db.query('SELECT id FROM products WHERE barcode = $1 AND ativo = TRUE', [barcode]);
+            if (checkBarcode.rowCount > 0) {
+                return res.status(409).json({
+                    success: false,
+                    message: `Código de Barras '${barcode}' já cadastrado.`,
+                    data: null,
+                    error: 'PROD_DUPLICATE_BARCODE'
+                });
+            }
+        }
+
         try {
             const insertSql = `
                 INSERT INTO products (
                     sku, barcode, name, description,
-                    category, ncm, unit,
-                    cost_price, sale_price, stock,
+                    category, subcategory, product_type,
+                    ncm, cst, csosn, cfop, unit,
+                    cost_price, sale_price, profit_margin, stock, min_stock,
+                    location, weight, height, width, depth, observations,
                     supplier_id, data_criacao, ativo
                 )
-                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, NOW(), TRUE)
+                VALUES (
+                    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+                    $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23,
+                    $24, NOW(), TRUE
+                )
                 RETURNING *
             `;
 
@@ -148,11 +207,24 @@ router.post(
                 name,
                 description || null,
                 category || null,
+                subcategory || null,
+                product_type || 'fisico',
                 ncm || null,
+                cst || null,
+                csosn || null,
+                cfop || null,
                 unit || null,
                 cost_price || null,
                 sale_price || null,
+                profit_margin || null,
                 stock || 0,
+                min_stock || 0,
+                location || null,
+                weight || null,
+                height || null,
+                width || null,
+                depth || null,
+                observations || null,
                 supplier_id || null
             ];
 
@@ -195,14 +267,52 @@ router.put(
             name,
             description,
             category,
+            subcategory,
+            product_type,
             ncm,
+            cst,
+            csosn,
+            cfop,
             unit,
             cost_price,
             sale_price,
+            profit_margin,
             stock,
+            min_stock,
+            location,
+            weight,
+            height,
+            width,
+            depth,
+            observations,
             supplier_id,
             ativo
         } = req.body;
+
+        // 1. Prevenção de Duplicidade (SKU e Barcode)
+        if (sku) {
+            const checkSku = await db.query('SELECT id FROM products WHERE sku = $1 AND id != $2 AND ativo = TRUE', [sku, id]);
+            if (checkSku.rowCount > 0) {
+                return res.status(409).json({
+                    success: false,
+                    message: `SKU '${sku}' já cadastrado em outro produto.`,
+                    data: null,
+                    error: 'PROD_DUPLICATE_SKU'
+                });
+            }
+        }
+
+        if (barcode) {
+            const checkBarcode = await db.query('SELECT id FROM products WHERE barcode = $1 AND id != $2 AND ativo = TRUE', [barcode, id]);
+            if (checkBarcode.rowCount > 0) {
+                return res.status(409).json({
+                    success: false,
+                    message: `Código de Barras '${barcode}' já cadastrado em outro produto.`,
+                    data: null,
+                    error: 'PROD_DUPLICATE_BARCODE'
+                });
+            }
+        }
 
         try {
             const updateSql = `
@@ -213,15 +323,28 @@ router.put(
                     name = $3,
                     description = $4,
                     category = $5,
-                    ncm = $6,
-                    unit = $7,
-                    cost_price = $8,
-                    sale_price = $9,
-                    stock = $10,
-                    supplier_id = $11,
-                    ativo = $12,
+                    subcategory = $6,
+                    product_type = $7,
+                    ncm = $8,
+                    cst = $9,
+                    csosn = $10,
+                    cfop = $11,
+                    unit = $12,
+                    cost_price = $13,
+                    sale_price = $14,
+                    profit_margin = $15,
+                    stock = $16,
+                    min_stock = $17,
+                    location = $18,
+                    weight = $19,
+                    height = $20,
+                    width = $21,
+                    depth = $22,
+                    observations = $23,
+                    supplier_id = $24,
+                    ativo = $25,
                     data_atualizacao = NOW()
-                WHERE id = $13
+                WHERE id = $26
                 RETURNING *
             `;
 
@@ -231,11 +354,24 @@ router.put(
                 name || null,
                 description || null,
                 category || null,
+                subcategory || null,
+                product_type || 'fisico',
                 ncm || null,
+                cst || null,
+                csosn || null,
+                cfop || null,
                 unit || null,
                 cost_price || null,
                 sale_price || null,
+                profit_margin || null,
                 stock || 0,
+                min_stock || 0,
+                location || null,
+                weight || null,
+                height || null,
+                width || null,
+                depth || null,
+                observations || null,
                 supplier_id || null,
                 (ativo !== undefined ? ativo : true),
                 id

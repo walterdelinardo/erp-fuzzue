@@ -16,13 +16,27 @@ const productFormTitle = document.getElementById('product-form-title');
 const inputId          = document.getElementById('prod-id');
 const inputName        = document.getElementById('prod-name');
 const inputSku         = document.getElementById('prod-sku');
+const inputBarcode     = document.getElementById('prod-barcode'); // NOVO
 const inputNcm         = document.getElementById('prod-ncm');
 const inputUnit        = document.getElementById('prod-unit');
 const inputCategory    = document.getElementById('prod-category');
+const inputSubcategory = document.getElementById('prod-subcategory'); // NOVO
+const inputProductType = document.getElementById('prod-product-type'); // NOVO
+const inputCst         = document.getElementById('prod-cst'); // NOVO
+const inputCsosn       = document.getElementById('prod-csosn'); // NOVO
+const inputCfop        = document.getElementById('prod-cfop'); // NOVO
 const inputDescription = document.getElementById('prod-description');
 const inputCost        = document.getElementById('prod-cost');
 const inputPrice       = document.getElementById('prod-price');
+const inputProfitMargin= document.getElementById('prod-profit-margin'); // NOVO
 const inputStock       = document.getElementById('prod-stock');
+const inputMinStock    = document.getElementById('prod-min-stock'); // NOVO
+const inputLocation    = document.getElementById('prod-location'); // NOVO
+const inputWeight      = document.getElementById('prod-weight'); // NOVO
+const inputHeight      = document.getElementById('prod-height'); // NOVO
+const inputWidth       = document.getElementById('prod-width'); // NOVO
+const inputDepth       = document.getElementById('prod-depth'); // NOVO
+const inputObservations= document.getElementById('prod-observations'); // NOVO
 const inputSupplier    = document.getElementById('prod-supplier');
 
 function showStatus(msg, isError = false) {
@@ -128,13 +142,27 @@ function openProductModal(mode, produto = null) {
         inputId.value          = '';
         inputName.value        = '';
         inputSku.value         = '';
+        inputBarcode.value     = ''; // NOVO
         inputNcm.value         = '';
         inputUnit.value        = '';
         inputCategory.value    = '';
+        inputSubcategory.value = ''; // NOVO
+        inputProductType.value = 'fisico'; // NOVO
+        inputCst.value         = ''; // NOVO
+        inputCsosn.value       = ''; // NOVO
+        inputCfop.value        = ''; // NOVO
         inputDescription.value = '';
         inputCost.value        = '';
         inputPrice.value       = '';
+        inputProfitMargin.value= ''; // NOVO
         inputStock.value       = '';
+        inputMinStock.value    = ''; // NOVO
+        inputLocation.value    = ''; // NOVO
+        inputWeight.value      = ''; // NOVO
+        inputHeight.value      = ''; // NOVO
+        inputWidth.value       = ''; // NOVO
+        inputDepth.value       = ''; // NOVO
+        inputObservations.value= ''; // NOVO
         inputSupplier.value    = '';
     } else {
         productForm.dataset.mode = 'edit';
@@ -143,13 +171,27 @@ function openProductModal(mode, produto = null) {
         inputId.value          = produto.id || '';
         inputName.value        = produto.name || '';
         inputSku.value         = produto.sku || '';
+        inputBarcode.value     = produto.barcode || ''; // NOVO
         inputNcm.value         = produto.ncm || '';
         inputUnit.value        = produto.unit || '';
         inputCategory.value    = produto.category || '';
+        inputSubcategory.value = produto.subcategory || ''; // NOVO
+        inputProductType.value = produto.product_type || 'fisico'; // NOVO
+        inputCst.value         = produto.cst || ''; // NOVO
+        inputCsosn.value       = produto.csosn || ''; // NOVO
+        inputCfop.value        = produto.cfop || ''; // NOVO
         inputDescription.value = produto.description || '';
         inputCost.value        = produto.cost_price || '';
         inputPrice.value       = produto.sale_price || '';
+        inputProfitMargin.value= produto.profit_margin || ''; // NOVO
         inputStock.value       = produto.stock || '';
+        inputMinStock.value    = produto.min_stock || ''; // NOVO
+        inputLocation.value    = produto.location || ''; // NOVO
+        inputWeight.value      = produto.weight || ''; // NOVO
+        inputHeight.value      = produto.height || ''; // NOVO
+        inputWidth.value       = produto.width || ''; // NOVO
+        inputDepth.value       = produto.depth || ''; // NOVO
+        inputObservations.value= produto.observations || ''; // NOVO
         inputSupplier.value    = produto.supplier_id || '';
     }
 
@@ -185,18 +227,31 @@ productForm.addEventListener('submit', async (ev) => {
 
     // pega valores do form
     const payload = {
-        sku:          inputSku.value.trim() || null,
-        barcode:      null, // você ainda não tem campo no modal, mas já suportado no backend
-        name:         inputName.value.trim(),
-        description:  inputDescription.value.trim() || null,
-        category:     inputCategory.value.trim() || null,
-        ncm:          inputNcm.value.trim() || null,
-        unit:         inputUnit.value.trim() || null,
-        cost_price:   inputCost.value ? Number(inputCost.value) : null,
-        sale_price:   inputPrice.value ? Number(inputPrice.value) : null,
-        stock:        inputStock.value ? Number(inputStock.value) : 0,
-        supplier_id:  inputSupplier.value ? Number(inputSupplier.value) : null,
-        ativo:        true
+        sku:            inputSku.value.trim() || null,
+        barcode:        inputBarcode.value.trim() || null, // AGORA TEM CAMPO
+        name:           inputName.value.trim(),
+        description:    inputDescription.value.trim() || null,
+        category:       inputCategory.value.trim() || null,
+        subcategory:    inputSubcategory.value.trim() || null, // NOVO
+        product_type:   inputProductType.value.trim() || 'fisico', // NOVO
+        ncm:            inputNcm.value.trim() || null,
+        cst:            inputCst.value.trim() || null, // NOVO
+        csosn:          inputCsosn.value.trim() || null, // NOVO
+        cfop:           inputCfop.value.trim() || null, // NOVO
+        unit:           inputUnit.value.trim() || null,
+        cost_price:     inputCost.value ? Number(inputCost.value) : null,
+        sale_price:     inputPrice.value ? Number(inputPrice.value) : null,
+        profit_margin:  inputProfitMargin.value ? Number(inputProfitMargin.value) : null, // NOVO
+        stock:          inputStock.value ? Number(inputStock.value) : 0,
+        min_stock:      inputMinStock.value ? Number(inputMinStock.value) : 0, // NOVO
+        location:       inputLocation.value.trim() || null, // NOVO
+        weight:         inputWeight.value ? Number(inputWeight.value) : null, // NOVO
+        height:         inputHeight.value ? Number(inputHeight.value) : null, // NOVO
+        width:          inputWidth.value ? Number(inputWidth.value) : null, // NOVO
+        depth:          inputDepth.value ? Number(inputDepth.value) : null, // NOVO
+        observations:   inputObservations.value.trim() || null, // NOVO
+        supplier_id:    inputSupplier.value ? Number(inputSupplier.value) : null,
+        ativo:          true
     };
 
     try {
