@@ -3,7 +3,7 @@
 
 const express = require('express');
 const router = express.Router();
-const pool = require('../db'); // ajuste se o seu pool estiver em outro arquivo
+const pool = require('../config/db'); // ajuste se o seu pool estiver em outro arquivo
 
 function createResponse(success, message, data = null, error = null) {
     return { success, message, data, error };
