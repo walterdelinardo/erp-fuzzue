@@ -9,13 +9,14 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
-const apiRoutes = require('./modules');                 // /server/modules/index.js (rotas gerais da API)
-const authRoutes = require('./modules/auth');           // /server/modules/auth.js (login, logout, sessão)
-const pdvRoutes = require('./modules/pdv');             // /server/modules/pdv.js (módulo PDV)
-const productsRoutes = require('./modules/products');   // /server/modules/products.js (módulo Produtos)
-const suppliersRoutes = require('./modules/suppliers'); // /server/modules/suppliers.js (módulo Fornecedores)
-const purchaseRoutes  = require('./modules/purchase');  // /server/modules/purchase.js (módulo ordens de compra)
-const financeRoutes = require('./modules/finance');     // /server/modules/finance.js (módulo financeiro)
+const apiRoutes       = require('./modules');          // /server/modules/index.js (rotas gerais da API)
+const authRoutes      = require('./modules/auth');     // /server/modules/auth.js (login, logout, sessão)
+const pdvRoutes       = require('./modules/pdv');      // /server/modules/pdv.js (módulo PDV)
+const productsRoutes  = require('./modules/products'); // /server/modules/products.js (módulo Produtos)
+const suppliersRoutes = require('./modules/suppliers');// /server/modules/suppliers.js (módulo Fornecedores)
+const purchaseRoutes  = require('./modules/purchase'); // /server/modules/purchase.js (módulo ordens de compra)
+const financeRoutes   = require('./modules/finance');  // /server/modules/finance.js (módulo financeiro)
+const pedidosRoutes   = require('./modules/pedidos');  // /server/modules/pedidos.js (NOVO módulo Pedidos)
 
 const app = express();
 const PORT = process.env.PORT || 40011;
@@ -34,7 +35,22 @@ app.use('/api/auth', authRoutes);
 console.log("Registrando rotas do PDV em /api/pdv");
 app.use('/api/pdv', pdvRoutes);
 
-// 3. Demais rotas genéricas da API
+console.log("Registrando rotas de produtos em /api/products");
+app.use('/api/products', productsRoutes);
+
+console.log("Registrando rotas de fornecedores em /api/suppliers");
+app.use('/api/suppliers', suppliersRoutes);
+
+console.log("Registrando rotas de compras em /api/purchase");
+app.use('/api/purchase', purchaseRoutes);
+
+console.log("Registrando rotas do financeiro em /api/finance");
+app.use('/api/finance', financeRoutes);
+
+console.log("Registrando rotas de pedidos em /api/pedidos");
+app.use('/api/pedidos', pedidosRoutes); // <-- AQUI entra o módulo pedidos
+
+// 3. Demais rotas genéricas da API (prefixo /api)
 console.log("Registrando rotas gerais em /api");
 app.use('/api', apiRoutes);
 
@@ -43,11 +59,6 @@ console.log("Registrando arquivos estáticos de /public");
 app.use(express.static(path.resolve(__dirname, '../public')));
 
 // 5. Catch-all: envia index.html para qualquer rota não tratada (SPA)
-app.use('/api/products', productsRoutes);
-app.use('/api/suppliers', suppliersRoutes);
-app.use('/api/purchase', purchaseRoutes);
-app.use('/api/finance', financeRoutes);
-
 app.get('*', (req, res) => {
     console.log(`Catch-all: Servindo index.html para a rota: ${req.path}`);
     res.sendFile(path.resolve(__dirname, '../public/index.html'));
@@ -57,8 +68,3 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
     console.log(`🚀 Servidor Fuzzue rodando na porta ${PORT}`);
 });
-
-app.use('/api/products', productsRoutes);
-app.use('/api/suppliers', suppliersRoutes);
-app.use('/api/purchase', purchaseRoutes);
-app.use('/api/finance', financeRoutes);
