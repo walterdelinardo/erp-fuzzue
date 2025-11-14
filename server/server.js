@@ -16,7 +16,7 @@ const productsRoutes  = require('./modules/products'); // /server/modules/produc
 const suppliersRoutes = require('./modules/suppliers');// /server/modules/suppliers.js (módulo Fornecedores)
 const purchaseRoutes  = require('./modules/purchase'); // /server/modules/purchase.js (módulo ordens de compra)
 const financeRoutes   = require('./modules/finance');  // /server/modules/finance.js (módulo financeiro)
-const pedidosRoutes   = require('./modules/pedidos');  // /server/modules/pedidos.js (NOVO módulo Pedidos)
+const ordersRoutes   = require('./modules/orders');  // /server/modules/orders.js (NOVO módulo Pedidos)
 
 const app = express();
 const PORT = process.env.PORT || 40011;
@@ -47,8 +47,8 @@ app.use('/api/purchase', purchaseRoutes);
 console.log("Registrando rotas do financeiro em /api/finance");
 app.use('/api/finance', financeRoutes);
 
-console.log("Registrando rotas de pedidos em /api/pedidos");
-app.use('/api/pedidos', pedidosRoutes); // <-- AQUI entra o módulo pedidos
+console.log("Registrando rotas de pedidos em /api/orders");
+app.use('/api/orders', ordersRoutes); // <-- AQUI entra o módulo pedidos
 
 // 3. Demais rotas genéricas da API (prefixo /api)
 console.log("Registrando rotas gerais em /api");

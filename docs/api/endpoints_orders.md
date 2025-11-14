@@ -2,13 +2,13 @@
 
 Base URL do módulo:
 
-`/api/pedidos`
+`/api/orders`
 
 ---
 
 ## 1. Criar pedido
 
-**POST** `/api/pedidos/create`
+**POST** `/api/orders/create`
 
 ### Request (JSON)
 
@@ -62,7 +62,7 @@ Copiar código
   "error": null
 }
 2. Listar pedidos
-GET /api/pedidos/list
+GET /api/orders/list
 
 Query Params (opcional)
 Nenhum por enquanto (lista todos ativos).
@@ -93,7 +93,7 @@ Copiar código
   "error": null
 }
 3. Buscar pedido por ID
-GET /api/pedidos/get/:id
+GET /api/orders/get/:id
 
 Response (200)
 json
@@ -128,7 +128,7 @@ Copiar código
   "error": null
 }
 4. Atualizar pedido
-PUT /api/pedidos/update/:id
+PUT /api/orders/update/:id
 
 Request (JSON)
 Mesmo formato do create:
@@ -168,7 +168,7 @@ Copiar código
   "error": null
 }
 5. Excluir (inativar) pedido
-DELETE /api/pedidos/delete/:id
+DELETE /api/orders/delete/:id
 
 Faz soft delete: seta ativo = false.
 

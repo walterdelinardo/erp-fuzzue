@@ -1,0 +1,90 @@
+<!-- public/js/modules/orders/orders.html -->
+<section class="modulo-orders">
+    <h1>Orders</h1>
+
+    <!-- Formulário -->
+    <form id="orderForm" class="order-form">
+        <input type="hidden" id="orderId">
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="customerId">Cliente *</label>
+                <select id="customerId" required>
+                    <option value="">Selecione...</option>
+                    <!-- futuro: preencher via JS com /api/customers/list -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="orderDate">Data do Pedido *</label>
+                <input type="date" id="orderDate" required>
+            </div>
+
+            <div class="form-group">
+                <label for="deliveryDate">Data de Entrega</label>
+                <input type="date" id="deliveryDate">
+            </div>
+
+            <div class="form-group">
+                <label for="orderStatus">Status *</label>
+                <select id="orderStatus" required>
+                    <option value="open">Aberto</option>
+                    <option value="invoiced">Faturado</option>
+                    <option value="cancelled">Cancelado</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="subtotalAmount">Subtotal *</label>
+                <input type="number" step="0.01" id="subtotalAmount" required>
+            </div>
+
+            <div class="form-group">
+                <label for="discountAmount">Desconto</label>
+                <input type="number" step="0.01" id="discountAmount" value="0.00">
+            </div>
+
+            <div class="form-group">
+                <label for="totalAmount">Valor Total *</label>
+                <input type="number" step="0.01" id="totalAmount" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group form-full">
+                <label for="notes">Observações</label>
+                <textarea id="notes" rows="3"></textarea>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="button" id="btnNewOrder">Novo</button>
+            <button type="submit" id="btnSaveOrder">Salvar</button>
+            <button type="button" id="btnClearOrder">Limpar</button>
+        </div>
+    </form>
+
+    <!-- Listagem -->
+    <div class="orders-list">
+        <h2>Orders Cadastrados</h2>
+        <table id="ordersTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Data</th>
+                    <th>Status</th>
+                    <th>Valor Total</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+                <!-- preenchido via JS -->
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<script src="/js/modules/orders/orders.js"></script>
